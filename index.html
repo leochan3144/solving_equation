@@ -1,722 +1,1161 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Linear Equation Challenge</title>
-    <!-- Load Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Use Inter font -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
-    <style>
-        /* Use Inter as the default font */
-        body {
-            font-family: 'Inter', sans-serif;
-        }
-        /* Use Roboto Mono for equations for better readability */
-        .font-mono {
-            font-family: 'Roboto Mono', monospace;
-        }
-        /* Custom class for the steps */
-        .steps-formatting {
-            font-family: 'Roboto Mono', monospace;
-            background-color: #f9fafb; /* bg-gray-50 */
-            padding: 1rem; /* p-4 */
-            border-radius: 0.5rem; /* rounded-lg */
-            border: 1px solid #e5e7eb; /* border-gray-200 */
-            line-height: 2.25; /* Increased line-height for fractions */
-        }
-        
-        /* CSS for rendering fractions */
-        .fraction {
-            display: inline-flex;
-            flex-direction: column;
-            vertical-align: middle;
-            text-align: center;
-            margin: 0 0.15em;
-            position: relative;
-        }
-        .numerator {
-            padding: 0 0.1em;
-            border-bottom: 2px solid currentColor;
-            line-height: 1;
-        }
-        .denominator {
-            padding: 0 0.1em;
-            line-height: 1;
-        }
-        /* Adjust alignment for large text in question */
-        #question-display .fraction {
-            top: -0.3em;
-        }
-        /* Adjust alignment for text in steps and answers */
-        .steps-formatting .fraction,
-        #correct-answer-display .fraction {
-            top: -0.1em;
-            line-height: 1.1;
-        }
-        .steps-formatting .numerator,
-        #correct-answer-display .fraction .numerator {
-            border-bottom-width: 1px;
-        }
-    </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#fbfdff">
+  <title>Balance Quest — Linear Equations Step Game</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=STIX+Two+Text:ital,wght@0,400;0,600;1,400;1,600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      color-scheme: light;
+      --paper: #FBFDFF;
+      --grid: #DFEAF6;
+      --ink: #1B2A6B;
+      --soft: #56639A;
+      --line: #C3D0EA;
+      --yellow: #FFE45C;
+      --yellow-ink: #1B2A6B;
+      --red: #D23232;
+      --green: #14905A;
+      --margin: #F2A0A0;
+      --panel: #EEF3FB;
+      --key: #FFFFFF;
+      --key-edge: #BCC8E6;
+      --term-constant: #CDEBFF;
+      --term-constant-ink: #143B61;
+      --ui: 'Bricolage Grotesque', 'Segoe UI', system-ui, sans-serif;
+      --math: 'STIX Two Text', 'Cambria Math', Cambria, 'Times New Roman', serif;
+      box-sizing: border-box;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        color-scheme: dark;
+        --paper: #0F1730;
+        --grid: #1A2647;
+        --ink: #E4EAFF;
+        --soft: #A3AFD8;
+        --line: #2C3A6A;
+        --yellow: #E9CF3A;
+        --yellow-ink: #14204F;
+        --red: #FF7070;
+        --green: #3DD598;
+        --margin: #7A3A4A;
+        --panel: #141E3D;
+        --key: #18224A;
+        --key-edge: #2E3C70;
+        --term-constant: #305D88;
+        --term-constant-ink: #F4FAFF;
+      }
+    }
+    *, *::before, *::after { box-sizing: inherit; }
+    html { min-height: 100%; }
+    body {
+      min-height: 100vh;
+      margin: 0;
+      color: var(--ink);
+      font: 17px/1.5 var(--ui);
+      background-color: var(--paper);
+      background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+      background-size: 26px 26px;
+    }
+    button { color: inherit; font: inherit; }
+    button:focus-visible { outline: 3px solid var(--yellow); outline-offset: 3px; }
+    [hidden] { display: none !important; }
+    .wrap { width: min(1100px, 100%); margin: 0 auto; padding: 16px 18px 42px; }
+    .top {
+      display: flex; align-items: center; flex-wrap: wrap; gap: 14px;
+      padding: 6px 0 14px; margin-bottom: 20px; border-bottom: 2px solid var(--ink);
+    }
+    .brand { margin: 0; font-size: 1.35rem; font-weight: 800; letter-spacing: -.03em; white-space: nowrap; }
+    .brand span { font: italic 600 1.1em var(--math); }
+    .progress { display: flex; flex: 1; min-width: 160px; gap: 6px; margin: 0; padding: 0 0 3px; overflow-x: auto; scrollbar-width: thin; list-style: none; }
+    .progress li {
+      display: grid; width: 26px; height: 30px; flex: 0 0 26px; place-items: center;
+      border: 2px solid var(--ink); border-radius: 7px; background: var(--paper); font-size: .82rem; font-weight: 700;
+    }
+    .progress li.now { background: var(--yellow); color: var(--yellow-ink); }
+    .progress li.done { background: var(--ink); color: var(--paper); }
+    .score { display: flex; align-items: baseline; gap: 8px; padding: 3px 13px; border: 2px solid var(--ink); border-radius: 10px; background: var(--paper); }
+    .score small { color: var(--soft); font-size: .8rem; }
+    .score b { min-width: 3ch; text-align: right; font-size: 1.4rem; font-variant-numeric: tabular-nums; }
+    .linkbtn { padding: 4px; border: 0; background: none; color: var(--soft); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+    .math { font-family: var(--math); }
+    .frac { display: inline-flex; flex-direction: column; align-items: stretch; vertical-align: middle; margin: 0 .1em; text-align: center; font-size: .82em; line-height: 1.08; white-space: nowrap; }
+    .frac .nu { padding: 0 .18em .05em; border-bottom: .08em solid currentColor; }
+    .frac .de { padding: .05em .18em 0; }
+    .btn {
+      padding: 12px 22px; border: 2px solid var(--ink); border-radius: 12px;
+      background: var(--ink); color: var(--paper); font-weight: 800; font-size: 1.05rem;
+      box-shadow: 0 4px 0 var(--soft); cursor: pointer; transition: transform .06s;
+    }
+    .btn:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--soft); }
+    .btn.ghost { background: var(--paper); color: var(--ink); }
+    .intro { display: grid; grid-template-columns: 1.1fr .9fr; gap: 38px; align-items: center; padding: 28px 0 16px; }
+    .hero { font: clamp(1.7rem, 4vw, 2.7rem)/1.25 var(--math); }
+    .hero .eyebrow { display: block; margin-bottom: 8px; color: var(--soft); font: 800 .42em var(--ui); letter-spacing: .08em; text-transform: uppercase; }
+    .hero .hero-line { display: grid; grid-template-columns: auto auto 1fr; align-items: center; gap: .25em; }
+    .hero .arrow { color: var(--soft); }
+    .hero .ph { opacity: .45; }
+    .intro h1 { margin: 22px 0 10px; font-size: clamp(1.7rem, 3.5vw, 2.3rem); line-height: 1.08; letter-spacing: -.03em; }
+    .lead { max-width: 48ch; margin: 0 0 22px; color: var(--soft); }
+    .rules { padding: 21px 24px; border: 2px solid var(--ink); border-radius: 14px; background: var(--paper); }
+    .rules h2 { margin: 0 0 10px; font-size: 1.15rem; }
+    .rules ul { margin: 0; padding-left: 1.2em; }
+    .rules li { margin: 7px 0; }
+    .level-guide { display: grid; gap: 7px; margin-top: 16px; padding-top: 12px; border-top: 1px dashed var(--line); }
+    .level-guide p { margin: 0; color: var(--soft); font-size: .88rem; }
+    .level-guide b { color: var(--ink); }
+    .points { color: var(--green); font-weight: 800; }
+    .tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+    .tags span, .pill {
+      padding: 3px 10px; border: 1.5px solid var(--line); border-radius: 8px;
+      background: var(--panel); color: var(--ink); font-size: .88rem; font-weight: 600;
+    }
+    .cta { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+    .level-buttons { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+    .level-btn { display: flex; min-height: 76px; flex-direction: column; align-items: flex-start; justify-content: center; gap: 2px; padding: 10px 14px; text-align: left; }
+    .level-btn small { font-size: .78rem; font-weight: 600; opacity: .82; }
+    .play-all-btn { grid-column: 1 / -1; justify-self: start; }
+    .play { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(300px, .7fr); gap: 26px; align-items: start; }
+    .sheet { position: relative; min-height: 430px; padding: 21px 24px 28px 84px; border: 2px solid var(--ink); border-radius: 14px; background: var(--paper); }
+    .sheet::before { position: absolute; top: 0; bottom: 0; left: 70px; width: 2px; background: var(--margin); content: ""; }
+    .qmeta { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; align-items: baseline; }
+    .qmeta h2 { margin: 0; font-size: 1.28rem; letter-spacing: -.02em; }
+    .type { color: var(--soft); font-size: .9rem; }
+    .tip { margin: 5px 0 15px; color: var(--soft); font-size: .94rem; }
+    .prompt { padding: 9px 0 14px; border-bottom: 1px dashed var(--line); font-size: 1.06rem; }
+    .prompt .equation { display: block; margin-top: 4px; font: 1.75rem var(--math); }
+    .term-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 9px; }
+    .highlight-btn { padding: 5px 10px; border: 1.5px solid var(--line); border-radius: 8px; background: var(--panel); color: var(--ink); font-size: .82rem; font-weight: 700; cursor: pointer; }
+    .highlight-status { color: var(--soft); font-size: .78rem; }
+    .term-highlight { border-radius: .2em; padding: 0 .06em; box-shadow: inset 0 -.1em 0 rgb(0 0 0 / 8%); }
+    .term-highlight.variable { background: var(--yellow); color: var(--yellow-ink); }
+    .term-highlight.constant { background: var(--term-constant); color: var(--term-constant-ink); }
+    .work { display: grid; grid-template-columns: 74px minmax(0, 1fr); align-items: center; }
+    .workrow { display: contents; }
+    .workrow > * { min-height: 3.5rem; padding: 9px 0; border-bottom: 1px dashed var(--line); }
+    .stepmark { position: relative; color: var(--soft); font-size: .75rem; font-weight: 800; text-align: right; padding-right: 12px !important; }
+    .stepmark span { position: absolute; left: -74px; width: 62px; }
+    .stepmark.active span { display: inline-block; padding: 2px 7px; border-radius: 6px; background: var(--yellow); color: var(--yellow-ink); }
+    .stepmark.complete { color: var(--green); }
+    .workline { overflow-wrap: anywhere; font: clamp(1.22rem, 2.5vw, 1.65rem) var(--math); }
+    .work-note { display: block; padding-top: 2px; color: var(--soft); font: .78rem var(--ui); }
+    .workrow.active .workline { border-bottom: 2px solid var(--ink); }
+    .workrow.pending .workline { color: var(--soft); letter-spacing: .18em; }
+    .side { position: sticky; top: 12px; }
+    .screen { margin-bottom: 10px; padding: 11px 14px; border: 2px solid var(--ink); border-radius: 14px; background: var(--panel); }
+    .screen .label { color: var(--soft); font-size: .82rem; }
+    .screen .val { min-height: 2.8rem; overflow-x: auto; white-space: nowrap; font: 1.65rem var(--math); }
+    .feedback { min-height: 1.6rem; margin: 0 0 8px; font-weight: 700; }
+    .feedback.ok { color: var(--green); }
+    .feedback.bad { color: var(--red); }
+    .feedback.note { color: var(--soft); }
+    .choices { display: grid; gap: 9px; }
+    .choice {
+      width: 100%; min-height: 57px; padding: 10px 13px; border: 2px solid var(--key-edge);
+      border-radius: 12px; background: var(--key); box-shadow: 0 3px 0 var(--key-edge);
+      font: 1.25rem var(--math); text-align: left; cursor: pointer; touch-action: manipulation;
+    }
+    .choice:hover { border-color: var(--ink); }
+    .choice:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--key-edge); }
+    .move-choice { font: 700 1rem var(--ui); }
+    .move-choice .letter { display: inline-grid; width: 1.7em; height: 1.7em; place-items: center; margin-right: 7px; border: 1px solid var(--line); border-radius: 6px; color: var(--soft); font-size: .8em; }
+    .move-trace { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 0 0 12px; }
+    .move-trace.simplify { grid-template-columns: 1fr; }
+    .move-caption { grid-column: 1 / -1; margin: 0; color: var(--soft); font-size: .84rem; }
+    .move-caption b { color: var(--ink); }
+    .move-side { padding: 8px 10px; border: 1.5px solid var(--line); border-radius: 9px; background: var(--panel); }
+    .move-side small { display: block; color: var(--soft); font-size: .76rem; }
+    .move-side b { font: 600 1.1rem var(--math); }
+    .answerform label { display: block; margin: 5px 0 4px; font-weight: 700; font-size: .92rem; }
+    .answerform input { width: 100%; min-height: 48px; padding: 8px 11px; border: 2px solid var(--key-edge); border-radius: 10px; background: var(--paper); color: var(--ink); font: 1.25rem var(--math); }
+    .answerform input:focus { border-color: var(--ink); outline: 3px solid var(--yellow); outline-offset: 1px; }
+    .keypad { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; margin-top: 9px; }
+    .padkey { min-width: 0; height: 43px; padding: 0 4px; border: 2px solid var(--key-edge); border-radius: 9px; background: var(--key); box-shadow: 0 2px 0 var(--key-edge); font-size: 1rem; font-weight: 700; cursor: pointer; touch-action: manipulation; }
+    .padkey.op { font: 600 1.25rem var(--math); }
+    .padkey.variable { background: var(--yellow); color: var(--yellow-ink); font: italic 600 1.15rem var(--math); }
+    .padkey.action { color: var(--soft); font-size: .76rem; }
+    .padkey:active { transform: translateY(2px); box-shadow: 0 0 0 var(--key-edge); }
+    .answerform .btn { width: 100%; margin-top: 9px; padding: 9px 16px; font-size: .98rem; }
+    .answer-help { margin: 6px 0 0; color: var(--soft); font-size: .8rem; }
+    .hint { margin: 10px 0; padding: 10px 13px; border-left: 5px solid var(--yellow-ink); border-radius: 10px; background: var(--yellow); color: var(--yellow-ink); }
+    .hint b { display: block; font-size: .84rem; }
+    .hint p { margin: 3px 0 0; }
+    .hintbtn { margin: 7px 0 0; padding: 4px 0; border: 0; background: none; color: var(--soft); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+    .typehelp { margin: 13px 0 0; color: var(--soft); font-size: .83rem; }
+    .complete-box { padding: 17px 15px; border: 2px solid var(--green); border-radius: 12px; background: var(--paper); }
+    .complete-box b { display: block; color: var(--green); font-size: 1.15rem; }
+    .complete-box span { color: var(--soft); }
+    .shake { animation: shake .32s; }
+    @keyframes shake { 20%, 60% { transform: translateX(-6px); } 40%, 80% { transform: translateX(6px); } }
+    .win { padding: 28px 0 8px; text-align: center; }
+    .win h1 { margin: 10px 0 4px; font-size: clamp(2rem, 5vw, 3rem); letter-spacing: -.04em; }
+    .win > p { margin: 0 0 22px; color: var(--soft); }
+    .trophy { width: min(220px, 55vw); height: auto; color: var(--gold, #E3A400); animation: rise .75s cubic-bezier(.2, 1.4, .4, 1); }
+    @keyframes rise { from { opacity: 0; transform: translateY(25px) scale(.75); } to { opacity: 1; transform: none; } }
+    .stats { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin: 0 0 24px; }
+    .stat { min-width: 130px; padding: 10px 18px; border: 2px solid var(--ink); border-radius: 12px; background: var(--paper); }
+    .stat b { display: block; font-size: 1.55rem; }
+    .stat span { color: var(--soft); font-size: .86rem; }
+    .win .cta { justify-content: center; }
+    .completion { margin-top: 16px; padding: 14px 12px; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); }
+    .completion .trophy { width: min(105px, 30vw); }
+    .completion h1 { margin: 5px 0 4px; font-size: clamp(1.35rem, 2.5vw, 1.8rem); }
+    .completion > p { margin: 0 0 13px; font-size: .88rem; }
+    .completion .stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-bottom: 14px; }
+    .completion .stat { min-width: 0; padding: 8px 5px; }
+    .completion .stat b { font-size: 1.15rem; }
+    .completion .stat span { font-size: .75rem; }
+    @media (max-width: 840px) {
+      .intro { grid-template-columns: 1fr; gap: 22px; padding-top: 10px; }
+      .play { grid-template-columns: 1fr; gap: 16px; }
+      .side { position: static; }
+      .sheet { min-height: 0; padding: 18px 15px 20px 70px; }
+      .sheet::before { left: 57px; }
+      .stepmark span { left: -66px; width: 54px; }
+    }
+    @media (max-width: 560px) {
+      .wrap { padding: 12px 10px 30px; }
+      .top { gap: 9px; }
+      .brand { flex: 1; font-size: 1.1rem; }
+      .progress { order: 4; flex: 0 0 100%; }
+      .level-buttons { grid-template-columns: 1fr; }
+      .play-all-btn { grid-column: auto; }
+      .progress li { width: 24px; height: 26px; flex: 0 0 24px; font-size: .76rem; }
+      .score { padding: 2px 9px; }
+      .score b { font-size: 1.18rem; }
+      .sheet { padding-left: 63px; }
+      .sheet::before { left: 51px; }
+      .work { grid-template-columns: 60px minmax(0, 1fr); }
+      .stepmark span { left: -57px; width: 48px; }
+      .workrow > * { min-height: 3.1rem; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition: none !important; }
+    }
+  </style>
 </head>
-<body class="bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center min-h-screen p-4">
+<body>
+  <main class="wrap">
+    <header class="top">
+      <h1 class="brand">Balance <span>Quest</span></h1>
+      <ol class="progress" id="progress" aria-label="Question progress" hidden></ol>
+      <div class="score" id="scoreBox" hidden><small>Score</small><b id="score">0</b></div>
+      <button class="linkbtn" id="soundButton" type="button" aria-pressed="true">Sound: On</button>
+      <button class="linkbtn" id="restartButton" type="button" hidden>Start over</button>
+    </header>
 
-    <!-- Main Game Container -->
-    <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-xl w-full max-w-lg">
-        <h1 class="text-3xl font-bold text-center text-indigo-700 mb-2">Equation Challenge</h1>
-        <p class="text-center text-gray-600 mb-6">Solve for x!</p>
-
-        <!-- Scoreboard and Level Change -->
-        <div class="flex justify-between items-center mb-4">
-            <button id="change-level-btn" class="hidden text-sm text-indigo-600 hover:text-indigo-800 transition-colors">&larr; Change Level</button>
-            <div id="score-display" class="text-2xl font-bold text-indigo-700 w-full text-right">Score: 0</div>
+    <section class="intro" id="introView">
+      <div>
+        <div class="hero" aria-label="Example solving steps">
+          <span class="eyebrow">One step at a time</span>
+          <div class="hero-line"><span>3<i>x</i> + 5 = 20</span><span class="arrow">→</span><span>3<i>x</i> = 15</span></div>
+          <div class="hero-line"><span class="ph">3<i>x</i> = 15</span><span class="arrow">→</span><span><i>x</i> = 5</span></div>
         </div>
-
-        <!-- Level Selection Screen -->
-        <div id="level-selection">
-            <h2 class="text-xl font-semibold text-center text-gray-800 mb-4">Choose your level:</h2>
-            <div class="grid grid-cols-1 gap-4">
-                <button data-level="1" class="level-btn bg-green-500 hover:bg-green-600 text-white font-bold py-4 px-6 rounded-lg text-lg shadow-md transition-transform transform hover:scale-105">
-                    Level 1: Simple
-                </button>
-                <button data-level="2" class="level-btn bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-4 px-6 rounded-lg text-lg shadow-md transition-transform transform hover:scale-105">
-                    Level 2: Variables Both Sides
-                </button>
-                <button data-level="3" class="level-btn bg-red-500 hover:bg-red-600 text-white font-bold py-4 px-6 rounded-lg text-lg shadow-md transition-transform transform hover:scale-105">
-                    Level 3: Fractions & Brackets
-                </button>
-            </div>
+        <h1>Find the value. Keep both sides balanced.</h1>
+        <p class="lead">Choose a balanced move, apply it to both sides, then write the new equation. Work through one-step questions, brackets, fractions, decimals, and variables on both sides.</p>
+        <div class="cta level-buttons" aria-label="Choose a game level">
+          <button class="btn level-btn" type="button" data-level="1"><span>Level 1 · Foundations</span><small>5 core questions</small></button>
+          <button class="btn level-btn" type="button" data-level="2"><span>Level 2 · Building skills</span><small>10 core questions</small></button>
+          <button class="btn level-btn" type="button" data-level="3"><span>Level 3 · Challenges</span><small>6 core questions</small></button>
+          <button class="btn ghost play-all-btn" id="playAllButton" type="button">Play all levels</button>
         </div>
-
-        <!-- Game Board Screen (Initially hidden) -->
-        <div id="game-board" class="hidden">
-            <!-- Question Display -->
-            <div class="bg-gray-100 p-6 rounded-lg mb-6 shadow-inner min-h-[8rem] flex items-center justify-center">
-                <div id="question-display" class="text-3xl font-mono text-center text-gray-900 break-words">
-                    <!-- Equation rendered by JS -->
-                </div>
-            </div>
-
-            <!-- Answer Input -->
-            <input type="text" id="answer-input" readonly class="w-full text-right text-4xl font-mono p-4 border-2 border-gray-200 rounded-lg mb-6 bg-white shadow-sm" placeholder="0">
-
-            <!-- Calculator Pad -->
-            <div id="calculator-pad" class="grid grid-cols-4 gap-3">
-                <button data-value="7" class="calc-btn">7</button>
-                <button data-value="8" class="calc-btn">8</button>
-                <button data-value="9" class="calc-btn">9</button>
-                <button data-value="clear" class="calc-btn bg-yellow-500 hover:bg-yellow-600 text-white">C</button>
-                
-                <button data-value="4" class="calc-btn">4</button>
-                <button data-value="5" class="calc-btn">5</button>
-                <button data-value="6" class="calc-btn">6</button>
-                <button data-value="-" class="calc-btn bg-gray-300 hover:bg-gray-400 text-gray-800">-</button>
-                
-                <button data-value="1" class="calc-btn">1</button>
-                <button data-value="2" class="calc-btn">2</button>
-                <button data-value="3" class="calc-btn">3</button>
-                <button data-value="/" class="calc-btn bg-gray-300 hover:bg-gray-400 text-gray-800">/</button>
-                
-                <button data-value="0" class="calc-btn">0</button>
-                <button data-value="." class="calc-btn bg-gray-300 hover:bg-gray-400 text-gray-800">.</button>
-                <button data-value="submit" class="calc-btn col-span-2 bg-green-500 hover:bg-green-600 text-white">Enter</button>
-            </div>
+        <div class="tags" aria-label="Question types">
+          <span>One-step</span><span>Two-step</span><span>Like terms</span><span>Brackets</span><span>Fractions</span><span>Decimals</span><span>Variables on both sides</span>
         </div>
-    </div>
-
-    <!-- Feedback Modal (Initially hidden) -->
-    <div id="feedback-modal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 hidden transition-opacity duration-300">
-        <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            <!-- Feedback Header -->
-            <div class="text-center mb-6">
-                <div id="feedback-icon" class="text-7xl mb-4"></div>
-                <h2 id="feedback-message" class="text-4xl font-bold"></h2>
-            </div>
-            
-            <!-- Solution Steps -->
-            <div class="mb-6">
-                <h3 class="text-xl font-semibold text-gray-800 mb-3">Detailed Steps:</h3>
-                <div id="feedback-steps" class="steps-formatting text-sm sm:text-base">
-                    <!-- Steps will be injected here -->
-                </div>
-            </div>
-
-            <!-- User vs Correct Answer -->
-            <div class="grid grid-cols-2 gap-4 mb-8">
-                <div class="text-center bg-red-50 p-4 rounded-lg border border-red-200">
-                    <div class="text-sm font-semibold text-red-700 mb-1">Your Answer</div>
-                    <div id="user-answer-display" class="text-2xl font-mono font-bold text-red-600 break-words"></div>
-                </div>
-                <div class="text-center bg-green-50 p-4 rounded-lg border border-green-200">
-                    <div class="text-sm font-semibold text-green-700 mb-1">Correct Answer</div>
-                    <div id="correct-answer-display" class="text-2xl font-mono font-bold text-green-600"></div>
-                </div>
-            </div>
-            
-            <button id="next-question-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-6 rounded-lg text-lg shadow-md transition-transform transform hover:scale-105">
-                Next Question
-            </button>
+      </div>
+      <aside class="rules">
+        <h2>How to play</h2>
+        <ul>
+          <li>Choose a move, then apply it to both sides of the equation.</li>
+          <li>Use the highlight button to distinguish variable terms from constants. Sound cues are on by default and can be turned off.</li>
+          <li>Type the new line after simplifying.</li>
+          <li>Use a hint if you get stuck. It will remind you what to do on each side.</li>
+          <li>You may enter a line up to 2 steps ahead. The game accepts it and records the omitted intermediate steps as skipped.</li>
+          <li>There are 3 core questions in each question type. A mistake adds one extra question of that type.</li>
+          <li><span class="points">10 points</span> for a step solved without a hint or retry; <span class="points">5 points</span> after a hint or retry.</li>
+        </ul>
+        <div class="level-guide" aria-label="Question levels">
+          <p><b>Level 1 · Foundations</b><br>One-step and basic two-step equations.</p>
+          <p><b>Level 2 · Building skills</b><br>Like terms, negative coefficients, simple brackets, fractions, and decimals.</p>
+          <p><b>Level 3 · Challenges</b><br>Variables on both sides and equations that combine brackets or fractions with other skills.</p>
         </div>
-    </div>
+      </aside>
+    </section>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // --- STATE VARIABLES ---
-            let scores = { 1: 0, 2: 0, 3: 0 };
-            let currentLevel = 1;
-            let currentScore = 0; // This will hold the score for the *active* level
-            let currentEquation = null;
-            let currentInput = "";
+    <section id="gameView" hidden>
+      <div class="play">
+        <article class="sheet" id="sheet" aria-label="Working area"></article>
+        <aside class="side">
+          <div class="screen">
+            <div class="label" id="screenLabel">Your current equation</div>
+            <div class="val" id="currentEquation"></div>
+          </div>
+          <p class="feedback note" id="feedback" aria-live="polite">Choose a move to apply.</p>
+          <div class="choices" id="choices"></div>
+          <div id="hintBox" class="hint" hidden></div>
+          <button class="hintbtn" id="hintButton" type="button">Show a hint</button>
+          <p class="typehelp">Tip: whatever you do to one side, do to the other.</p>
+          <section id="finishView" class="win completion" hidden>
+            <svg class="trophy" viewBox="0 0 220 220" role="img" aria-label="Trophy">
+              <path fill="currentColor" d="M61 28h98v45c0 35-20 58-42 64v23h34v20H69v-20h34v-23C81 131 61 108 61 73V28zm18 18v27c0 24 12 40 31 46 19-6 31-22 31-46V46H79z"/>
+              <path fill="none" stroke="currentColor" stroke-width="13" stroke-linecap="round" d="M61 48H35v23c0 25 15 39 37 39M159 48h26v23c0 25-15 39-37 39"/>
+              <path fill="currentColor" d="m110 59 8 16 18 3-13 12 3 18-16-9-16 9 3-18-13-12 18-3z"/>
+            </svg>
+            <h1>Equation champion!</h1>
+            <p id="finishMessage">You completed the questions in this set.</p>
+            <div class="stats">
+              <div class="stat"><b id="finalScore">0</b><span>Points</span></div>
+              <div class="stat"><b id="finalSteps">0 / 0</b><span>Steps completed</span></div>
+              <div class="stat"><b id="finalSkipped">0</b><span>Steps skipped</span></div>
+              <div class="stat"><b id="finalFirstTry">0%</b><span>Solved first try</span></div>
+            </div>
+            <div class="cta"><button class="btn" id="playAgainButton" type="button">Play again</button></div>
+          </section>
+        </aside>
+      </div>
+    </section>
+  </main>
 
-            // --- REMOVED STATIC EQUATION BANK ---
-            // const equations = { ... }; // This object has been removed.
+  <script>
+    const LEVEL_LABELS = {
+      1: "Level 1 · Foundations",
+      2: "Level 2 · Building skills",
+      3: "Level 3 · Challenges"
+    };
+    const $ = function (id) { return document.getElementById(id); };
 
-            // --- NEW HELPER FUNCTIONS ---
+    function randomInt(min, max) {
+      return min + Math.floor(Math.random() * (max - min + 1));
+    }
 
-            /**
-             * Returns a random integer between min (inclusive) and max (inclusive).
-             * Can optionally exclude specific values.
-             */
-            function randInt(min, max, exclude = []) {
-                let num;
-                do {
-                    num = Math.floor(Math.random() * (max - min + 1)) + min;
-                } while (exclude.includes(num));
-                return num;
-            }
+    function randomNonzeroInt(min, max) {
+      let value = 0;
+      while (value === 0) value = randomInt(min, max);
+      return value;
+    }
 
-            /**
-             * Calculates the Greatest Common Divisor of two numbers.
-             */
-            function gcd(a, b) {
-                a = Math.abs(a);
-                b = Math.abs(b);
-                return b === 0 ? a : gcd(b, a % b);
-            }
+    function randomVariable(used) {
+      const letters = "abcdefghjkmnpqrstuvwxyz".split("").filter(function (letter) { return used.indexOf(letter) === -1; });
+      const variable = letters[randomInt(0, letters.length - 1)];
+      used.push(variable);
+      return variable;
+    }
 
-            /**
-             * Simplifies a fraction and handles signs.
-             * @returns {object} { answer, display }
-             */
-            function simplifyFraction(num, den) {
-                if (den === 0) return { answer: NaN, display: "Undefined" }; // Avoid division by zero
-                
-                // Ensure denominator is positive
-                if (den < 0) {
-                    num = -num;
-                    den = -den;
-                }
+    function fmtInt(value) {
+      return String(value).replace(/-/g, "−");
+    }
 
-                const commonDivisor = gcd(num, den);
-                const simplifiedNum = num / commonDivisor;
-                const simplifiedDen = den / commonDivisor;
+    function fmtTenth(value) {
+      const absolute = Math.abs(value);
+      return (value < 0 ? "−" : "") + Math.floor(absolute / 10) + "." + (absolute % 10);
+    }
 
-                let display;
-                if (simplifiedDen === 1) {
-                    display = `${simplifiedNum}`;
-                } else {
-                    display = `[frac:${simplifiedNum}:${simplifiedDen}]`;
-                }
+    function constantText(value) {
+      if (value > 0) return " + " + fmtInt(value);
+      if (value < 0) return " − " + fmtInt(-value);
+      return "";
+    }
 
-                return {
-                    answer: simplifiedNum / simplifiedDen,
-                    display: display
-                };
-            }
+    function decimalConstantText(value10) {
+      if (value10 > 0) return " + " + fmtTenth(value10);
+      if (value10 < 0) return " − " + fmtTenth(-value10);
+      return "";
+    }
 
-            /**
-             * Formats a number for display in an equation (e.g., + 5, - 3)
-             */
-            function formatOp(n) {
-                return n >= 0 ? `+ ${n}` : `- ${Math.abs(n)}`;
-            }
-            
-            /**
-             * Formats a number for display at the start of an equation (e.g. 5, -3)
-             */
-            function formatStart(n) {
-                return n >= 0 ? `${n}` : `-${Math.abs(n)}`;
-            }
+    function variableTerm(coefficient, variable) {
+      if (coefficient === 1) return variable;
+      if (coefficient === -1) return "−" + variable;
+      return fmtInt(coefficient) + variable;
+    }
 
-            /**
-             * Formats a term with 'x' (e.g., 5x, -3x, x, -x)
-             */
-            function formatX(n) {
-                if (n === 1) return "x";
-                if (n === -1) return "-x";
-                return `${n}x`;
-            }
-            
-            /**
-             * Formats a term with 'x' for the start of an equation (e.g. 5x, -3x, x, -x)
-             */
-            function formatStartX(n) {
-                 if (n === 1) return "x";
-                 if (n === -1) return "-x";
-                 return `${n}x`;
-            }
+    function constantAction(value) {
+      if (value > 0) return { move: "Subtract " + fmtInt(value) + " from both sides", symbol: "− " + fmtInt(value), opposite: "Add " + fmtInt(value) + " to both sides" };
+      return { move: "Add " + fmtInt(-value) + " to both sides", symbol: "+ " + fmtInt(-value), opposite: "Subtract " + fmtInt(-value) + " from both sides" };
+    }
 
-            // --- NEW EQUATION GENERATORS ---
+    function decimalAction(value10) {
+      if (value10 > 0) return { move: "Subtract " + fmtTenth(value10) + " from both sides", symbol: "− " + fmtTenth(value10), opposite: "Add " + fmtTenth(value10) + " to both sides" };
+      return { move: "Add " + fmtTenth(-value10) + " to both sides", symbol: "+ " + fmtTenth(-value10), opposite: "Subtract " + fmtTenth(-value10) + " from both sides" };
+    }
 
-            function generateLevel1() {
-                const type = randInt(1, 3);
-                let x, a, b, c, text, answer, displayAnswer, steps;
+    function balanceStep(move, symbol, line, hint, wrongMoves) {
+      return { kind: "balance", move: move, symbol: symbol, line: line, hint: hint, wrongMoves: wrongMoves };
+    }
 
-                switch (type) {
-                    case 1: // ax + b = c
-                        x = randInt(-9, 9, [0]); // Get non-zero answer
-                        a = randInt(2, 6);
-                        b = randInt(-10, 10);
-                        c = a * x + b;
-                        
-                        text = `${formatStartX(a)} ${formatOp(b)} = ${c}`;
-                        answer = x;
-                        displayAnswer = `${x}`;
-                        steps = `${text}\n  ${formatX(a)} = ${c} ${formatOp(-b)}\n  ${formatX(a)} = ${c - b}\n   x = [frac:${c - b}:${a}]\n   x = ${x}`;
-                        break;
+    function simplifyStep(move, line, hint, wrongMoves) {
+      return { kind: "simplify", move: move, symbol: "Simplify left side", line: line, hint: hint, wrongMoves: wrongMoves };
+    }
 
-                    case 2: // a - bx = c
-                        x = randInt(-9, 9, [0]);
-                        b = randInt(2, 6); // b is positive, so it's always "a - bx"
-                        a = randInt(-10, 10);
-                        c = a - b * x;
-                        
-                        text = `${a} - ${b}x = ${c}`;
-                        answer = x;
-                        displayAnswer = `${x}`;
-                        steps = `${text}\n  -${b}x = ${c} ${formatOp(-a)}\n  -${b}x = ${c - a}\n   x = [frac:${c - a}:${-b}]\n   x = ${x}`;
-                        break;
+    function makeQuestion(levelKey, type, typeKey, equation, steps, extra) {
+      return {
+        level: extra ? "Extra practice" : LEVEL_LABELS[levelKey],
+        levelKey: levelKey,
+        type: type,
+        typeKey: typeKey,
+        equation: equation,
+        steps: steps
+      };
+    }
 
-                    case 3: // [frac:x:a] + b = c
-                        a = randInt(2, 5);
-                        b = randInt(-5, 5);
-                        let x_over_a = randInt(-5, 5, [0]); // This is the (x/a) part
-                        x = x_over_a * a;
-                        c = x_over_a + b;
-                        
-                        text = `[frac:x:${a}] ${formatOp(b)} = ${c}`;
-                        answer = x;
-                        displayAnswer = `${x}`;
-                        steps = `${text}\n  [frac:x:${a}] = ${c} ${formatOp(-b)}\n  [frac:x:${a}] = ${c - b}\n   x = ${c - b} * ${a}\n   x = ${x}`;
-                        break;
-                }
-                
-                return { text, answer, displayAnswer, steps };
-            }
+    function makeOneStepAddition(levelKey, extra, used) {
+      const v = randomVariable(used);
+      const addend = randomNonzeroInt(-9, 9);
+      const solution = randomNonzeroInt(-9, 9);
+      const result = solution + addend;
+      const action = constantAction(addend);
+      return makeQuestion(levelKey, "One-step · addition", "oneStep", v + constantText(addend) + " = " + fmtInt(result), [
+        balanceStep(action.move, action.symbol, v + " = " + fmtInt(solution), "Undo the addition or subtraction by doing the inverse operation to both sides.", [action.opposite, "Divide both sides by " + fmtInt(Math.abs(addend))])
+      ], extra);
+    }
 
-            // --- RE-INSERTED THE MISSING LEVEL 2 GENERATOR ---
-            function generateLevel2() {
-                let a, b, c, d, num, den, frac, text, answer, displayAnswer, steps;
+    function makeOneStepMultiplication(levelKey, extra, used) {
+      const v = randomVariable(used);
+      const coefficient = randomInt(2, 9);
+      const solution = randomNonzeroInt(-9, 9);
+      const result = coefficient * solution;
+      return makeQuestion(levelKey, "One-step · multiplication", "oneStep", coefficient + v + " = " + fmtInt(result), [
+        balanceStep("Divide both sides by " + coefficient, "÷ " + coefficient, v + " = " + fmtInt(solution), "Divide both sides by the coefficient of the variable.", ["Multiply both sides by " + coefficient, "Add " + coefficient + " to both sides"])
+      ], extra);
+    }
 
-                // ax + b = cx + d
-                a = randInt(2, 9);
-                c = randInt(2, 9);
-                while (a === c) c = randInt(2, 9); // Ensure a != c
-                
-                b = randInt(-10, 10);
-                d = randInt(-10, 10);
+    function makeOneStepDivision(levelKey, extra, used) {
+      const v = randomVariable(used);
+      const divisor = randomInt(2, 9);
+      const solution = randomNonzeroInt(-9, 9);
+      return makeQuestion(levelKey, "One-step · division", "oneStep", v + " / " + divisor + " = " + fmtInt(solution), [
+        balanceStep("Multiply both sides by " + divisor, "× " + divisor, v + " = " + fmtInt(divisor * solution), "Multiply both sides by the denominator to leave the variable by itself.", ["Divide both sides by " + divisor, "Add " + divisor + " to both sides"])
+      ], extra);
+    }
 
-                num = d - b;
-                den = a - c;
-                frac = simplifyFraction(num, den);
-                
-                text = `${formatStartX(a)} ${formatOp(b)} = ${formatStartX(c)} ${formatOp(d)}`;
-                answer = frac.answer;
-                displayAnswer = frac.display;
-                steps = `${text}\n  ${formatX(a)} ${formatOp(-c)}x = ${d} ${formatOp(-b)}\n  ${formatX(a - c)} = ${d - b}\n   x = [frac:${d - b}:${a - c}]\n   x = ${frac.display}`;
-                
-                return { text, answer, displayAnswer, steps };
-            }
-            // --- END OF RE-INSERTED CODE ---
+    function makeTwoStepPositive(levelKey, extra, used) {
+      const v = randomVariable(used);
+      const coefficient = randomInt(2, 7);
+      const constant = randomInt(2, 12);
+      const solution = randomNonzeroInt(-8, 8);
+      const middle = coefficient * solution;
+      const result = middle + constant;
+      return makeQuestion(levelKey, "Two-step · positive coefficient", "twoStep", coefficient + v + " + " + constant + " = " + fmtInt(result), [
+        balanceStep("Subtract " + constant + " from both sides", "− " + constant, coefficient + v + " = " + fmtInt(middle), "Subtract the constant from both sides first, then simplify.", ["Add " + constant + " to both sides", "Divide both sides by " + constant]),
+        balanceStep("Divide both sides by " + coefficient, "÷ " + coefficient, v + " = " + fmtInt(solution), "Divide both sides by the coefficient to isolate the variable.", ["Multiply both sides by " + coefficient, "Subtract " + coefficient + " from both sides"])
+      ], extra);
+    }
 
+    function makeTwoStepSubtraction(levelKey, extra, used) {
+      const v = randomVariable(used);
+      const coefficient = randomInt(2, 7);
+      const constant = randomInt(2, 12);
+      const solution = randomNonzeroInt(-8, 8);
+      const middle = coefficient * solution;
+      const result = middle - constant;
+      return makeQuestion(levelKey, "Two-step · subtraction", "twoStep", coefficient + v + " − " + constant + " = " + fmtInt(result), [
+        balanceStep("Add " + constant + " to both sides", "+ " + constant, coefficient + v + " = " + fmtInt(middle), "Add the subtracted constant to both sides first.", ["Subtract " + constant + " from both sides", "Divide both sides by " + constant]),
+        balanceStep("Divide both sides by " + coefficient, "÷ " + coefficient, v + " = " + fmtInt(solution), "Divide both sides by the coefficient to isolate the variable.", ["Multiply both sides by " + coefficient, "Subtract " + coefficient + " from both sides"])
+      ], extra);
+    }
 
-            // DELETED THE DUPLICATE, INCORRECT generateLevel3() FUNCTION THAT WAS HERE.
+    function makeTwoStepNegativeCoefficient(levelKey, extra, used) {
+      const v = randomVariable(used);
+      const coefficient = randomInt(2, 7);
+      const constant = randomInt(8, 24);
+      const solution = randomNonzeroInt(-8, 8);
+      const result = constant - coefficient * solution;
+      return makeQuestion(levelKey, "Two-step · negative coefficient", "twoStep", constant + " − " + coefficient + v + " = " + fmtInt(result), [
+        balanceStep("Subtract " + constant + " from both sides", "− " + constant, "−" + coefficient + v + " = " + fmtInt(-coefficient * solution), "Subtract the constant from each side to leave the negative variable term.", ["Add " + constant + " to both sides", "Divide both sides by " + constant]),
+        balanceStep("Divide both sides by −" + coefficient, "÷ (−" + coefficient + ")", v + " = " + fmtInt(solution), "Divide both sides by the negative coefficient. Keep track of the signs.", ["Multiply both sides by −" + coefficient, "Divide both sides by " + coefficient])
+      ], extra);
+    }
 
-            function generateLevel3() {
-                const type = randInt(1, 5); // Changed from 4 to 5
-                let a, b, c, d, e, num, den, frac, text, answer, displayAnswer, steps; // Added 'e'
+    function makeLikeTerms(levelKey, extra, used, variant) {
+      const v = randomVariable(used);
+      const first = randomInt(5, 9);
+      const second = randomInt(1, 4);
+      const coefficient = first - second;
+      let constant;
+      let equation;
+      let simplifyMove;
+      if (variant === 1) {
+        constant = randomNonzeroInt(-9, 9);
+        equation = first + v + " − " + second + v + constantText(constant);
+        simplifyMove = "Combine " + first + v + " and −" + second + v + " on the left";
+      } else if (variant === 2) {
+        const total = first + randomInt(2, 5);
+        const other = total - first;
+        constant = -randomInt(1, 9);
+        equation = first + v + " + " + other + v + constantText(constant);
+        simplifyMove = "Combine " + first + v + " and " + other + v + " on the left";
+        const solution = randomNonzeroInt(-8, 8);
+        const result = coefficientForLikeTerms(first, other, solution, constant);
+        const middle = result - constant;
+        return likeTermsQuestion(levelKey, extra, v, "Like terms · addition", equation, simplifyMove, total, constant, solution, result, middle, first, other, false);
+      } else {
+        constant = randomNonzeroInt(-9, 9);
+        equation = first + v + constantText(constant) + " − " + second + v;
+        simplifyMove = "Combine " + first + v + " and −" + second + v + " on the left";
+      }
+      const solution = randomNonzeroInt(-8, 8);
+      const result = coefficient * solution + constant;
+      const middle = result - constant;
+      const label = variant === 1 ? "Like terms · subtraction" : "Like terms · mixed signs";
+      return likeTermsQuestion(levelKey, extra, v, label, equation, simplifyMove, coefficient, constant, solution, result, middle, first, second, true);
+    }
 
-                switch (type) {
-                    case 1: // [frac:x:a] +/- [frac:x:b] = c
-                        a = randInt(2, 6);
-                        b = randInt(2, 6);
-                        while (a === b) b = randInt(2, 6); // a != b
-                        c = randInt(-5, 5, [0]); // non-zero c
-                        
-                        let op = randInt(0, 1) === 0 ? "+" : "-";
-                        let opSign = (op === "+") ? 1 : -1;
-                        
-                        text = `[frac:x:${a}] ${op} [frac:x:${b}] = ${c}`;
-                        // (bx +/- ax) / ab = c
-                        // (b +/- a)x = c * ab
-                        // x = (c * ab) / (b +/- a)
-                        num = c * a * b;
-                        den = b + (opSign * a);
-                        if (den === 0) return generateLevel3(); // Avoid division by zero, regenerate
-                        
-                        frac = simplifyFraction(num, den);
-                        let lcd = a * b / gcd(a, b);
+    function coefficientForLikeTerms(first, second, solution, constant) {
+      return (first + second) * solution + constant;
+    }
 
-                        answer = frac.answer;
-                        displayAnswer = frac.display;
-                        steps = `${text}\nLCD is ${lcd}\n  [frac:${lcd/a}x:${lcd}] ${op} [frac:${lcd/b}x:${lcd}] = ${c}\n  [frac:${formatX(lcd/a)} ${op} ${formatX(lcd/b)}:${lcd}] = ${c}\n  [frac:${formatX((lcd/a) + opSign * (lcd/b))}:${lcd}] = ${c}\n  ${formatX((lcd/a) + opSign * (lcd/b))} = ${c * lcd}\n  x = [frac:${c * lcd}:${(lcd/a) + opSign * (lcd/b)}]\n  x = ${frac.display}`;
-                        break;
+    function likeTermsQuestion(levelKey, extra, v, label, equation, simplifyMove, coefficient, constant, solution, result, middle, first, second, subtractPattern) {
+      const action = constantAction(constant);
+      return makeQuestion(levelKey, label, "likeTerms", equation + " = " + fmtInt(result), [
+        simplifyStep(simplifyMove, coefficient + v + constantText(constant) + " = " + fmtInt(result), "Combine only the like variable terms. Leave the constants and right side unchanged.", ["Combine the variable terms as " + (first + second) + v, "Combine a variable term with the constant"]),
+        balanceStep(action.move, action.symbol, coefficient + v + " = " + fmtInt(middle), "Undo the constant by doing the inverse operation to both sides.", [action.opposite, "Divide both sides by " + Math.abs(constant)]),
+        balanceStep("Divide both sides by " + coefficient, "÷ " + coefficient, v + " = " + fmtInt(solution), "Divide both sides by the remaining coefficient.", ["Multiply both sides by " + coefficient, "Subtract " + coefficient + " from both sides"])
+      ], extra);
+    }
 
-                    case 2: // a(x + b) = c(x + d)
-                        a = randInt(2, 6);
-                        b = randInt(-5, 5, [0]);
-                        c = randInt(2, 6);
-                        while (a === c) c = randInt(2, 6); // a != c
-                        d = randInt(-5, 5, [0]);
-                        while (b === d) d = randInt(-5, 5, [0]); // b != d
-                        
-                        // ax + ab = cx + cd
-                        // (a-c)x = cd - ab
-                        num = c * d - a * b;
-                        den = a - c;
-                        // den is non-zero
-                        frac = simplifyFraction(num, den);
+    function makeBracketSimple(levelKey, extra, used) {
+      const v = randomVariable(used);
+      const outside = randomInt(2, 6);
+      const inside = randomInt(2, 9);
+      const solution = randomNonzeroInt(-7, 8);
+      const result = outside * (solution + inside);
+      const distributed = outside * inside;
+      const alternative = {
+        move: "Divide both sides by " + outside,
+        steps: [
+          balanceStep("Divide both sides by " + outside, "÷ " + outside, v + " + " + inside + " = " + fmtInt(solution + inside), "Divide the entire left side and the right side by the outside coefficient.", ["Divide only the left side by " + outside, "Subtract " + outside + " from both sides"]),
+          balanceStep("Subtract " + inside + " from both sides", "− " + inside, v + " = " + fmtInt(solution), "Subtract the constant from both sides to isolate the variable.", ["Add " + inside + " to both sides", "Divide both sides by " + inside])
+        ]
+      };
+      const first = simplifyStep("Distribute " + outside + " across the bracket", outside + v + " + " + distributed + " = " + fmtInt(result), "Multiply both terms inside the bracket by " + outside + ". The right side stays unchanged.", ["Multiply only the variable by " + outside, "Multiply both sides by " + outside]);
+      first.alternative = alternative;
+      return makeQuestion(levelKey, "Brackets · distributive property", "brackets", outside + "(" + v + " + " + inside + ") = " + fmtInt(result), [
+        first,
+        balanceStep("Subtract " + distributed + " from both sides", "− " + distributed, outside + v + " = " + fmtInt(outside * solution), "Subtract the distributed constant from both sides.", ["Add " + distributed + " to both sides", "Divide both sides by " + distributed]),
+        balanceStep("Divide both sides by " + outside, "÷ " + outside, v + " = " + fmtInt(solution), "Divide both sides by the outside coefficient.", ["Multiply both sides by " + outside, "Subtract " + outside + " from both sides"])
+      ], extra);
+    }
 
-                        text = `${a}(x ${formatOp(b)}) = ${c}(x ${formatOp(d)})`;
-                        answer = frac.answer;
-                        displayAnswer = frac.display;
-                        steps = `${text}\n  ${formatX(a)} ${formatOp(a*b)} = ${formatX(c)} ${formatOp(c*d)}\n  ${formatX(a)} ${formatOp(-c)}x = ${c*d} ${formatOp(-a*b)}\n  ${formatX(a-c)} = ${c*d - a*b}\n  x = [frac:${c*d - a*b}:${a-c}]\n  x = ${frac.display}`;
-                        break;
+    function makeFractionSimple(levelKey, extra, used, subtraction) {
+      const v = randomVariable(used);
+      const divisor = randomInt(2, 8);
+      const offset = randomInt(1, 9);
+      const target = randomNonzeroInt(-5, 8);
+      const signedOffset = subtraction ? -offset : offset;
+      const solution = target * divisor - signedOffset;
+      const clearResult = target * divisor;
+      const action = constantAction(signedOffset);
+      return makeQuestion(levelKey, subtraction ? "Fractions · subtraction in numerator" : "Fractions · addition in numerator", "fractions", "(" + v + constantText(signedOffset) + ") / " + divisor + " = " + fmtInt(target), [
+        balanceStep("Multiply both sides by " + divisor, "× " + divisor, v + constantText(signedOffset) + " = " + fmtInt(clearResult), "Multiply both complete sides by the denominator to clear the fraction.", ["Divide both sides by " + divisor, "Add " + divisor + " to both sides"]),
+        balanceStep(action.move, action.symbol, v + " = " + fmtInt(solution), "Use the inverse operation on both sides to leave the variable by itself.", [action.opposite, "Multiply both sides by " + Math.abs(signedOffset)])
+      ], extra);
+    }
 
-                    case 3: // [frac:(x + a):b] = [frac:(x + c):d]
-                        a = randInt(-5, 5, [0]);
-                        b = randInt(2, 6);
-                        c = randInt(-5, 5, [0]);
-                        while (a === c) c = randInt(-5, 5, [0]); // a != c
-                        d = randInt(2, 6);
-                        while (b === d) d = randInt(2, 6); // b != d
+    function makeFractionBothSides(levelKey, extra, used) {
+      const v = randomVariable(used);
+      const leftDenominator = randomInt(2, 6);
+      const rightDenominator = leftDenominator * 2;
+      const leftOffset = randomInt(1, 6);
+      const solution = randomInt(1, 8);
+      const rightOffset = solution + 2 * leftOffset;
+      const cleared = "2(" + v + " + " + leftOffset + ") = " + v + " + " + rightOffset;
+      return makeQuestion(levelKey, "Fractions · variables on both sides", "fractions", "(" + v + " + " + leftOffset + ") / " + leftDenominator + " = (" + v + " + " + rightOffset + ") / " + rightDenominator, [
+        balanceStep("Multiply both sides by " + rightDenominator, "× " + rightDenominator, cleared, "Multiply both complete sides by the common denominator. The fraction denominators clear together.", ["Multiply only the left side by " + rightDenominator, "Divide both sides by " + rightDenominator]),
+        simplifyStep("Expand the left bracket", "2" + v + " + " + (2 * leftOffset) + " = " + v + " + " + rightOffset, "Distribute 2 to both terms inside the bracket.", ["Multiply only the variable by 2", "Expand the right side instead"]),
+        balanceStep("Subtract " + v + " from both sides", "− " + v, v + " + " + (2 * leftOffset) + " = " + rightOffset, "Subtract the variable from both sides so the variable remains on one side.", ["Add " + v + " to both sides", "Subtract " + (2 * leftOffset) + " from both sides"]),
+        balanceStep("Subtract " + (2 * leftOffset) + " from both sides", "− " + (2 * leftOffset), v + " = " + solution, "Subtract the constant from each side to isolate the variable.", ["Add " + (2 * leftOffset) + " to both sides", "Divide both sides by " + (2 * leftOffset)])
+      ], extra);
+    }
 
-                        // d(x+a) = b(x+c)
-                        // dx + da = bx + bc
-                        // (d-b)x = bc - da
-                        num = b * c - d * a;
-                        den = d - b;
-                        if (den === 0) return generateLevel3(); // Regenerate if d == b
-                        
-                        frac = simplifyFraction(num, den);
-                        
-                        text = `[frac:x ${formatOp(a)}:${b}] = [frac:x ${formatOp(c)}:${d}]`;
-                        answer = frac.answer;
-                        displayAnswer = frac.display;
-                        steps = `${text}\nCross-multiply:\n  ${d}(x ${formatOp(a)}) = ${b}(x ${formatOp(c)})\n  ${formatX(d)} ${formatOp(d*a)} = ${formatX(b)} ${formatOp(b*c)}\n  ${formatX(d)} ${formatOp(-b)}x = ${b*c} ${formatOp(-d*a)}\n  ${formatX(d-b)} = ${b*c - d*a}\n  x = [frac:${b*c - d*a}:${d-b}]\n  x = ${frac.display}`;
-                        break;
-                    
-                    case 4: // a(x + b) = cx + d (Moved from Level 2)
-                        a = randInt(2, 6);
-                        b = randInt(-5, 5, [0]); // non-zero
-                        c = randInt(2, 9);
-                        d = randInt(-10, 10);
-                        while (a === c) c = randInt(2, 9); // Ensure a != c
+    function makeDecimal(levelKey, extra, used, subtraction, label) {
+      const v = randomVariable(used);
+      const coefficient10Options = [5, 12, 15, 25, 35, 45];
+      const coefficient10 = coefficient10Options[randomInt(0, coefficient10Options.length - 1)];
+      const constant10 = randomInt(10, 80);
+      const solution = randomNonzeroInt(-8, 8);
+      const signedConstant10 = subtraction ? -constant10 : constant10;
+      const right10 = coefficient10 * solution + signedConstant10;
+      const coefficient = fmtTenth(coefficient10);
+      const action = decimalAction(signedConstant10);
+      return makeQuestion(levelKey, label, "decimals", coefficient + v + decimalConstantText(signedConstant10) + " = " + fmtTenth(right10), [
+        balanceStep(action.move, action.symbol, coefficient + v + " = " + fmtTenth(coefficient10 * solution), "Undo the decimal constant by doing the inverse operation to both sides.", [action.opposite, "Divide both sides by " + fmtTenth(constant10)]),
+        balanceStep("Divide both sides by " + coefficient, "÷ " + coefficient, v + " = " + fmtInt(solution), "Divide both sides by the decimal coefficient to isolate the variable.", ["Multiply both sides by " + coefficient, "Subtract " + coefficient + " from both sides"])
+      ], extra);
+    }
 
-                        num = d - a * b;
-                        den = a - c;
-                        frac = simplifyFraction(num, den);
+    function makeBothSides(levelKey, extra, used) {
+      const v = randomVariable(used);
+      const leftCoefficient = randomInt(5, 9);
+      const rightCoefficient = randomInt(2, leftCoefficient - 1);
+      const difference = leftCoefficient - rightCoefficient;
+      const leftConstant = randomNonzeroInt(-10, 10);
+      const solution = randomNonzeroInt(-8, 8);
+      const rightConstant = leftConstant + difference * solution;
+      const constantMove = constantAction(leftConstant);
+      return makeQuestion(levelKey, "Variables on both sides · collect terms", "bothSides", leftCoefficient + v + constantText(leftConstant) + " = " + rightCoefficient + v + constantText(rightConstant), [
+        balanceStep("Subtract " + rightCoefficient + v + " from both sides", "− " + rightCoefficient + v, difference + v + constantText(leftConstant) + " = " + fmtInt(rightConstant), "Subtract the smaller variable term from both sides to collect the variables on the left.", ["Add " + rightCoefficient + v + " to both sides", "Subtract " + leftCoefficient + v + " from both sides"]),
+        balanceStep(constantMove.move, constantMove.symbol, difference + v + " = " + fmtInt(difference * solution), "Undo the constant on the left by doing the inverse operation to both sides.", [constantMove.opposite, "Divide both sides by " + Math.abs(leftConstant)]),
+        balanceStep("Divide both sides by " + difference, "÷ " + difference, v + " = " + fmtInt(solution), "Divide both sides by the remaining variable coefficient.", ["Multiply both sides by " + difference, "Subtract " + difference + " from both sides"])
+      ], extra);
+    }
 
-                        text = `${a}(x ${formatOp(b)}) = ${formatStartX(c)} ${formatOp(d)}`;
-                        answer = frac.answer;
-                        displayAnswer = frac.display;
-                        steps = `${text}\n  ${formatX(a)} ${formatOp(a * b)} = ${formatX(c)} ${formatOp(d)}\n  ${formatX(a)} ${formatOp(-c)}x = ${d} ${formatOp(-a * b)}\n  ${formatX(a - c)} = ${d - a * b}\n   x = [frac:${d - a * b}:${a - c}]\n   x = ${frac.display}`;
-                        break;
-                    
-                    case 5: // NEW: a(x + b) = c(x + d) + e
-                        a = randInt(2, 6);
-                        b = randInt(-5, 5, [0]);
-                        c = randInt(2, 6);
-                        while (a === c) c = randInt(2, 6); // a != c
-                        d = randInt(-5, 5, [0]);
-                        e = randInt(-9, 9, [0]); // The extra constant
-                        
-                        // a(x + b) = c(x + d) + e
-                        // ax + ab = cx + cd + e
-                        // (a - c)x = cd + e - ab
-                        num = c * d + e - a * b;
-                        den = a - c;
-                        
-                        frac = simplifyFraction(num, den);
+    function makeBracketExpandCombine(levelKey, extra, used) {
+      const v = randomVariable(used);
+      const outside = randomInt(3, 8);
+      const rightCoefficient = randomInt(1, outside - 1);
+      const difference = outside - rightCoefficient;
+      const inside = randomInt(2, 7);
+      const extraConstant = randomInt(1, 5);
+      const leftConstant = extraConstant - outside * inside;
+      const solution = randomNonzeroInt(-6, 7);
+      const rightConstant = leftConstant + difference * solution;
+      const constantMove = constantAction(leftConstant);
+      return makeQuestion(levelKey, "Brackets · expand and combine terms", "brackets", outside + "(" + v + " − " + inside + ") + " + extraConstant + " = " + rightCoefficient + v + constantText(rightConstant), [
+        simplifyStep("Distribute " + outside + " across the bracket", outside + v + " − " + (outside * inside) + " + " + extraConstant + " = " + rightCoefficient + v + constantText(rightConstant), "Multiply both terms inside the bracket by " + outside + ". Keep the right side unchanged.", ["Multiply only the variable by " + outside, "Distribute the bracket to both sides"]),
+        simplifyStep("Combine the constants on the left", outside + v + constantText(leftConstant) + " = " + rightCoefficient + v + constantText(rightConstant), "Combine the negative product and the added constant on the left.", ["Add the constants instead of subtracting", "Combine a constant with a variable term"]),
+        balanceStep("Subtract " + rightCoefficient + v + " from both sides", "− " + rightCoefficient + v, difference + v + constantText(leftConstant) + " = " + fmtInt(rightConstant), "Subtract the variable term on the right from both sides.", ["Add " + rightCoefficient + v + " to both sides", "Subtract " + outside + v + " from both sides"]),
+        balanceStep(constantMove.move, constantMove.symbol, difference + v + " = " + fmtInt(rightConstant - leftConstant), "Undo the constant on the left using the same operation on both sides.", [constantMove.opposite, "Divide both sides by " + Math.abs(leftConstant)]),
+        balanceStep("Divide both sides by " + difference, "÷ " + difference, v + " = " + fmtInt(solution), "Divide both sides by the remaining coefficient.", ["Multiply both sides by " + difference, "Subtract " + difference + " from both sides"])
+      ], extra);
+    }
 
-                        text = `${a}(x ${formatOp(b)}) = ${c}(x ${formatOp(d)}) ${formatOp(e)}`;
-                        answer = frac.answer;
-                        displayAnswer = frac.display;
-                        steps = `${text}\n  ${formatX(a)} ${formatOp(a*b)} = ${formatX(c)} ${formatOp(c*d)} ${formatOp(e)}\n  ${formatX(a)} ${formatOp(a*b)} = ${formatX(c)} ${formatOp(c*d + e)}\n  ${formatX(a)} ${formatOp(-c)}x = ${c*d + e} ${formatOp(-a*b)}\n  ${formatX(a-c)} = ${c*d + e - a*b}\n  x = [frac:${c*d + e - a*b}:${a-c}]\n  x = ${frac.display}`;
-                        break;
-                }
+    function makeBracketBothSides(levelKey, extra, used) {
+      const v = randomVariable(used);
+      const outside = randomInt(3, 8);
+      const rightCoefficient = randomInt(1, outside - 1);
+      const difference = outside - rightCoefficient;
+      const inside = randomInt(1, 7);
+      const solution = randomNonzeroInt(-6, 8);
+      const rightConstant = difference * solution + outside * inside;
+      return makeQuestion(levelKey, "Brackets · variables on both sides", "brackets", outside + "(" + v + " + " + inside + ") = " + rightCoefficient + v + constantText(rightConstant), [
+        simplifyStep("Distribute " + outside + " across the left bracket", outside + v + " + " + (outside * inside) + " = " + rightCoefficient + v + constantText(rightConstant), "Multiply both terms inside the left bracket by " + outside + ". Do not change the right side.", ["Multiply only the variable by " + outside, "Multiply both sides by " + outside]),
+        balanceStep("Subtract " + rightCoefficient + v + " from both sides", "− " + rightCoefficient + v, difference + v + " + " + (outside * inside) + " = " + fmtInt(rightConstant), "Subtract the variable term on the right from both sides.", ["Add " + rightCoefficient + v + " to both sides", "Subtract " + outside + v + " from both sides"]),
+        balanceStep("Subtract " + (outside * inside) + " from both sides", "− " + (outside * inside), difference + v + " = " + fmtInt(difference * solution), "Subtract the constant from each side.", ["Add " + (outside * inside) + " to both sides", "Divide both sides by " + (outside * inside)]),
+        balanceStep("Divide both sides by " + difference, "÷ " + difference, v + " = " + fmtInt(solution), "Divide both sides by the remaining coefficient to isolate the variable.", ["Multiply both sides by " + difference, "Subtract " + difference + " from both sides"])
+      ], extra);
+    }
 
-                return { text, answer, displayAnswer, steps };
-            }
+    function buildQuestionBank() {
+      const used = [];
+      const bank = [
+        makeOneStepAddition(1, false, used),
+        makeOneStepMultiplication(1, false, used),
+        makeTwoStepPositive(1, false, used),
+        makeOneStepDivision(1, false, used),
+        makeTwoStepSubtraction(1, false, used),
+        makeLikeTerms(2, false, used, 1),
+        makeBracketSimple(2, false, used),
+        makeFractionSimple(2, false, used, true),
+        makeDecimal(2, false, used, false, "Decimals · positive coefficient"),
+        makeTwoStepNegativeCoefficient(2, false, used),
+        makeLikeTerms(2, false, used, 2),
+        makeLikeTerms(2, false, used, 3),
+        makeFractionSimple(2, false, used, false),
+        makeDecimal(2, false, used, true, "Decimals · subtraction"),
+        makeDecimal(2, false, used, false, "Decimals · addition"),
+        makeBothSides(3, false, used),
+        makeFractionBothSides(3, false, used),
+        makeBracketExpandCombine(3, false, used),
+        makeBothSides(3, false, used),
+        makeBracketBothSides(3, false, used),
+        makeBothSides(3, false, used)
+      ];
+      return bank;
+    }
 
-            /**
-             * Main function to generate an equation based on level.
-             */
-            function generateEquation(level) {
-                // Ensure level is treated as a number
-                const numericLevel = parseInt(level, 10);
-                switch (numericLevel) {
-                    case 1:
-                        return generateLevel1();
-                    case 2:
-                        return generateLevel2();
-                    case 3:
-                        return generateLevel3();
-                    default:
-                        console.error("Unknown level:", level);
-                        return generateLevel1();
-                }
-            }
- 
-            // --- DOM ELEMENTS ---
-            const scoreDisplay = document.getElementById('score-display');
-            const levelSelection = document.getElementById('level-selection');
-            const gameBoard = document.getElementById('game-board');
-            const questionDisplay = document.getElementById('question-display');
-            const answerInput = document.getElementById('answer-input');
-            const calculatorPad = document.getElementById('calculator-pad');
-            const changeLevelBtn = document.getElementById('change-level-btn');
-            
-            // Modal Elements
-            const modal = document.getElementById('feedback-modal');
-            const feedbackIcon = document.getElementById('feedback-icon');
-            const feedbackMessage = document.getElementById('feedback-message');
-            const feedbackSteps = document.getElementById('feedback-steps');
-            const userAnswerDisplay = document.getElementById('user-answer-display');
-            const correctAnswerDisplay = document.getElementById('correct-answer-display');
-            const nextQuestionBtn = document.getElementById('next-question-btn');
+    function createQuestionBank() {
+      let previous = null;
+      try { previous = window.localStorage.getItem("balanceQuestQuestionSet"); } catch (error) { /* Storage may be disabled for local files. */ }
+      let bank;
+      let fingerprint;
+      for (let attempt = 0; attempt < 6; attempt++) {
+        bank = buildQuestionBank();
+        fingerprint = bank.map(function (question) { return question.equation; }).sort().join("|");
+        if (fingerprint !== previous) break;
+      }
+      try { window.localStorage.setItem("balanceQuestQuestionSet", fingerprint); } catch (error) { /* Random generation still works without storage. */ }
+      return bank;
+    }
 
-            // --- FUNCTIONS ---
+    const questions = createQuestionBank();
+    const bonusUsed = [];
+    const bonusQuestions = {
+      oneStep: makeOneStepMultiplication(1, true, bonusUsed),
+      twoStep: makeTwoStepPositive(1, true, bonusUsed),
+      likeTerms: makeLikeTerms(2, true, bonusUsed, 1),
+      brackets: makeBracketSimple(2, true, bonusUsed),
+      fractions: makeFractionSimple(2, true, bonusUsed, true),
+      decimals: makeDecimal(2, true, bonusUsed, false, "Decimals · extra practice"),
+      bothSides: makeBothSides(3, true, bonusUsed)
+    };
+    const typeOrder = ["oneStep", "twoStep", "likeTerms", "brackets", "fractions", "decimals", "bothSides"];
+    questions.sort(function (a, b) { return a.levelKey - b.levelKey || typeOrder.indexOf(a.typeKey) - typeOrder.indexOf(b.typeKey); });
+    let game = null;
+    const sound = { enabled: true, context: null };
 
-            /**
-             * Renders a string with [frac:num:den] tags into HTML fractions.
-             * Also replaces newlines with <br> tags.
-             * @param {string} text - The text to format.
-             * @returns {string} HTML-formatted string.
-             */
-            function renderEquation(text) {
-                if (!text) return "";
-                // Replace newlines with <br> tags for steps
-                let html = text.replace(/\n/g, '<br>');
+    function shuffled(items) {
+      const copy = items.slice();
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const temp = copy[i]; copy[i] = copy[j]; copy[j] = temp;
+      }
+      return copy;
+    }
 
-                // Regex to find [frac:numerator:denominator]
-                const fracRegex = /\[frac:([^:]+):([^\]]+)\]/g;
-                
-                html = html.replace(fracRegex, (match, num, den) => {
-                    return `
-                        <div class="fraction">
-                            <span class="numerator">${num}</span>
-                            <span class="denominator">${den}</span>
-                        </div>
-                    `;
-                });
-                
-                return html;
-            }
+    function mathSegmentHTML(line) {
+      const fractions = [];
+      let text = String(line).replace(/\(([^()]+)\)\s*\/\s*(\d+(?:\.\d+)?|[a-z])/gi, function (_, numerator, denominator) {
+        const spoken = numerator.replace(/[()]/g, "") + " over " + denominator;
+        fractions.push('<span class="frac" role="math" aria-label="' + spoken + '"><span class="nu">' + numerator.replace(/[a-z]/g, function (letter) { return "<i>" + letter + "</i>"; }) + '</span><span class="de">' + denominator.replace(/[a-z]/g, function (letter) { return "<i>" + letter + "</i>"; }) + '</span></span>');
+        return "\uE000" + (fractions.length - 1) + "\uE001";
+      });
+      text = text.replace(/([a-z]|\d+(?:\.\d+)?|−\d+)\s*\/\s*(\d+(?:\.\d+)?|[a-z])/gi, function (_, numerator, denominator) {
+        const spoken = numerator + " over " + denominator;
+        fractions.push('<span class="frac" role="math" aria-label="' + spoken + '"><span class="nu">' + numerator.replace(/[a-z]/g, function (letter) { return "<i>" + letter + "</i>"; }) + '</span><span class="de">' + denominator.replace(/[a-z]/g, function (letter) { return "<i>" + letter + "</i>"; }) + '</span></span>');
+        return "\uE000" + (fractions.length - 1) + "\uE001";
+      });
+      text = text.replace(/[a-z]/g, function (letter) { return "<i>" + letter + "</i>"; });
+      return text.replace(/\uE000(\d+)\uE001/g, function (_, index) { return fractions[Number(index)]; });
+    }
 
-            // Set initial score display
-            function updateScoreDisplayAllLevels() {
-                scoreDisplay.innerHTML = `
-                    <span class="text-lg font-bold text-green-600">L1: ${scores[1]}</span>
-                    <span class="text-lg font-bold text-yellow-600 ml-3">L2: ${scores[2]}</span>
-                    <span class="text-lg font-bold text-red-600 ml-3">L3: ${scores[3]}</span>
-                `;
-            }
-            updateScoreDisplayAllLevels(); // Call on load
+    function splitIntoTerms(line) {
+      const parts = [];
+      let term = "";
+      let depth = 0;
+      for (let i = 0; i < line.length; i++) {
+        const character = line[i];
+        if (character === "(") depth++;
+        if (character === ")") depth = Math.max(0, depth - 1);
+        if (depth === 0 && character === "=" && term.trim()) {
+          parts.push({ kind: "term", text: term });
+          parts.push({ kind: "operator", text: "=" });
+          term = "";
+        } else if (depth === 0 && (character === "+" || character === "−" || character === "-")) {
+          if (term.trim()) {
+            parts.push({ kind: "term", text: term });
+            term = character;
+          } else {
+            term += character;
+          }
+        } else {
+          term += character;
+        }
+      }
+      if (term) parts.push({ kind: "term", text: term });
+      return parts;
+    }
 
-            // Start the game at a chosen level
-            function startGame(level) {
-                currentLevel = level;
-                currentScore = scores[currentLevel]; // Load the score for the new level
-                updateScoreDisplay();
-                levelSelection.classList.add('hidden');
-                gameBoard.classList.remove('hidden');
-                changeLevelBtn.classList.remove('hidden');
-                loadNewQuestion();
-            }
+    function mathHTML(line, highlightMode) {
+      return splitIntoTerms(String(line)).map(function (part) {
+        if (part.kind === "operator") return part.text;
+        const hasVariable = /[a-z]/i.test(part.text);
+        const shouldHighlight = highlightMode === 0;
+        const rendered = mathSegmentHTML(part.text);
+        return shouldHighlight ? '<mark class="term-highlight ' + (hasVariable ? "variable" : "constant") + '">' + rendered + "</mark>" : rendered;
+      }).join("");
+    }
 
-            // Go back to level selection
-            function showLevelSelection() {
-                gameBoard.classList.add('hidden');
-                changeLevelBtn.classList.add('hidden');
-                levelSelection.classList.remove('hidden');
-                updateScoreDisplayAllLevels();
-            }
+    function syncTermHighlightControls() {
+      const button = $("highlightButton");
+      const status = $("highlightStatus");
+      if (game.highlightMode === 0) {
+        button.textContent = "Clear highlights";
+        status.textContent = "Variable terms are yellow; constants are blue.";
+      } else {
+        button.textContent = "Highlight all terms";
+        status.textContent = "No terms highlighted.";
+      }
+    }
 
-            // Load a new random question for the current level
-            function loadNewQuestion() {
-                currentInput = "";
-                answerInput.value = "";
-                // --- MODIFIED TO GENERATE EQUATION ---
-                currentEquation = generateEquation(currentLevel); 
-                // --- END MODIFICATION ---
-                questionDisplay.innerHTML = renderEquation(currentEquation.text);
-            }
+    function refreshTermHighlights() {
+      const q = game.queue[game.qIndex];
+      document.querySelector(".prompt .equation").innerHTML = mathHTML(q.equation, game.highlightMode);
+      document.querySelectorAll(".workline[data-history-index]").forEach(function (lineElement) {
+        const index = Number(lineElement.getAttribute("data-history-index"));
+        const note = lineElement.querySelector(".work-note");
+        lineElement.innerHTML = mathHTML(game.history[index].line, game.highlightMode);
+        if (note) lineElement.appendChild(note);
+      });
+      $("currentEquation").innerHTML = mathHTML(game.history[game.history.length - 1].line, game.highlightMode);
+      syncTermHighlightControls();
+    }
 
-            // Update the score display
-            function updateScoreDisplay() {
-                scores[currentLevel] = currentScore; // Save current score to the object
-                scoreDisplay.innerHTML = `<span class="text-2xl font-bold text-indigo-700">Level ${currentLevel} Score: ${currentScore}</span>`;
-            }
+    function toggleTermHighlights() {
+      game.highlightMode = game.highlightMode === -1 ? 0 : -1;
+      refreshTermHighlights();
+    }
 
-            // Handle input from the calculator pad
-            function handleInput(value) {
-                if (value === 'submit') {
-                    if (currentInput === "" || currentInput === "-") return;
-                    checkAnswer();
-                } else if (value === 'clear') {
-                    currentInput = currentInput.slice(0, -1);
-                } else if (value === '-') {
-                    if (currentInput === "") {
-                        currentInput = "-";
-                    }
-                } else if (value === '.') {
-                    // Allow dot only if not in a fraction or if it's the first dot
-                    if (!currentInput.includes('.')) {
-                        currentInput += ".";
-                    }
-                } else if (value === '/') {
-                    // Allow fraction slash only once, and not as first char
-                    if (currentInput !== "" && !currentInput.includes('/') && currentInput !== "-") {
-                        currentInput += "/";
-                    }
-                } else {
-                    // Prevent leading zeros unless it's "0."
-                    if (currentInput === "0") {
-                        currentInput = value;
-                    } else {
-                        currentInput += value;
-                    }
-                }
-                answerInput.value = currentInput;
-            }
+    function playTone(frequency, duration, delay, volume) {
+      if (!sound.enabled) return;
+      const AudioContextType = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextType) return;
+      try {
+        if (!sound.context) sound.context = new AudioContextType();
+        if (sound.context.state === "suspended") sound.context.resume();
+        const oscillator = sound.context.createOscillator();
+        const gain = sound.context.createGain();
+        const start = sound.context.currentTime + delay;
+        oscillator.type = "sine";
+        oscillator.frequency.setValueAtTime(frequency, start);
+        gain.gain.setValueAtTime(0.0001, start);
+        gain.gain.exponentialRampToValueAtTime(volume, start + 0.012);
+        gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+        oscillator.connect(gain);
+        gain.connect(sound.context.destination);
+        oscillator.start(start);
+        oscillator.stop(start + duration + 0.02);
+      } catch (error) {
+        // Audio is optional; keep the game usable if the browser blocks it.
+      }
+    }
 
-            // Check the user's answer
-            function checkAnswer() {
-                let userAnswer;
-                
-                // Check if input is a fraction
-                if (currentInput.includes('/')) {
-                    const parts = currentInput.split('/');
-                    // Check for valid fraction format e.g., "7/9", not "7/" or "/9"
-                    if (parts.length === 2 && parts[0] !== '' && parts[1] !== '' && parts[1] !== '0') {
-                        const numerator = parseFloat(parts[0]);
-                        const denominator = parseFloat(parts[1]);
-                        if (!isNaN(numerator) && !isNaN(denominator)) {
-                            userAnswer = numerator / denominator;
-                        } else {
-                            userAnswer = NaN; // Invalid number in fraction
-                        }
-                    } else {
-                        userAnswer = NaN; // Invalid fraction format
-                    }
-                } else {
-                    userAnswer = parseFloat(currentInput);
-                }
+    function playSound(kind) {
+      if (kind === "wrong") {
+        playTone(190, 0.16, 0, 0.07);
+      } else if (kind === "correct") {
+        playTone(620, 0.12, 0, 0.055);
+        playTone(820, 0.16, 0.1, 0.055);
+      } else if (kind === "complete") {
+        playTone(523, 0.16, 0, 0.05);
+        playTone(659, 0.16, 0.14, 0.05);
+        playTone(784, 0.28, 0.28, 0.06);
+      }
+    }
 
-                const correctAnswer = currentEquation.answer;
-                
-                // Check for invalid number
-                if (isNaN(userAnswer)) {
-                    // You could show a small error, but for now just ignore submission
-                    return;
-                }
+    function syncSoundButton() {
+      $("soundButton").textContent = sound.enabled ? "Sound: On" : "Sound: Off";
+      $("soundButton").setAttribute("aria-pressed", String(sound.enabled));
+    }
 
-                // Compare with a small tolerance for floating-point issues
-                const isCorrect = Math.abs(userAnswer - correctAnswer) < 0.001;
+    function setView(which) {
+      $("introView").hidden = which !== "intro";
+      $("gameView").hidden = which !== "game";
+      $("finishView").hidden = true;
+      $("progress").hidden = which !== "game";
+      $("scoreBox").hidden = which !== "game";
+      $("restartButton").hidden = which === "intro";
+      window.scrollTo(0, 0);
+    }
 
-                if (isCorrect) {
-                    currentScore++;
-                    showFeedback(true);
-                } else {
-                    currentScore = Math.max(0, currentScore - 1); // Don't go below 0
-                    showFeedback(false);
-                }
-                updateScoreDisplay();
-            }
+    function startGame(levelKey) {
+      const selectedQuestions = levelKey
+        ? shuffled(questions.filter(function (question) { return question.levelKey === levelKey; }))
+        : [1, 2, 3].reduce(function (all, key) {
+          return all.concat(shuffled(questions.filter(function (question) { return question.levelKey === key; })));
+        }, []);
+      game = {
+        queue: selectedQuestions.map(function (q) { return Object.assign({}, q, { isBonus: false }); }),
+        bonusProvided: {}, totalSteps: 0, currentQuestionHadError: false, highlightMode: -1,
+        selectedLevel: levelKey || null,
+        finished: false,
+        qIndex: 0, stepIndex: 0, history: [], phase: "move", selectedMove: "",
+        score: 0, solved: 0, skipped: 0, firstTry: 0, tries: 0, hintSeen: false, hintOpen: false,
+        feedback: "Choose a move to apply.", feedbackType: "note"
+      };
+      game.totalSteps = game.queue.reduce(function (sum, q) { return sum + q.steps.length; }, 0);
+      loadQuestion();
+      setView("game");
+      renderGame();
+    }
 
-            // Show the feedback modal
-            function showFeedback(isCorrect) {
-                if (isCorrect) {
-                    feedbackIcon.textContent = "👍";
-                    feedbackMessage.textContent = "Correct!";
-                    feedbackMessage.className = "text-4xl font-bold text-green-600";
-                } else {
-                    feedbackIcon.textContent = "😢";
-                    feedbackMessage.textContent = "Incorrect!";
-                    feedbackMessage.className = "text-4xl font-bold text-red-600";
-                }
+    function loadQuestion() {
+      game.stepIndex = 0;
+      game.history = [{ line: game.queue[game.qIndex].equation, note: "Starting equation", stepNumber: 0 }];
+      game.phase = "move";
+      game.selectedMove = "";
+      game.tries = 0;
+      game.hintSeen = false;
+      game.hintOpen = false;
+      game.currentQuestionHadError = false;
+      game.feedback = "Choose a move to apply.";
+      game.feedbackType = "note";
+    }
 
-                feedbackSteps.innerHTML = renderEquation(currentEquation.steps);
-                userAnswerDisplay.textContent = currentInput || "N/A";
-                correctAnswerDisplay.innerHTML = renderEquation(currentEquation.displayAnswer);
-                
-                modal.classList.remove('hidden');
-            }
+    function renderProgress() {
+      $("progress").innerHTML = game.queue.map(function (_, i) {
+        const cls = i < game.qIndex ? "done" : (i === game.qIndex ? "now" : "");
+        const mark = i < game.qIndex ? "✓" : String(i + 1);
+        const label = i < game.qIndex ? "complete" : (i === game.qIndex ? "current" : "up next");
+        return '<li class="' + cls + '" aria-label="Question ' + (i + 1) + ', ' + label + '">' + mark + "</li>";
+      }).join("");
+      $("score").textContent = String(game.score);
+    }
 
-            // Hide the modal and load the next question
-            function nextQuestion() {
-                modal.classList.add('hidden');
-                loadNewQuestion();
-            }
+    function renderSheet(q) {
+      const step = q.steps[game.stepIndex];
+      const done = game.stepIndex >= q.steps.length;
+      const skippedThisQuestion = game.history.some(function (entry) { return entry.skipped; });
+      let html = '<div class="qmeta"><h2>' + (q.isBonus ? "Extra question" : "Question " + (game.qIndex + 1) + " of " + game.queue.length) + '</h2><span class="type">' + q.level + ' · ' + q.type + '</span></div>';
+      html += '<p class="tip">For a balance move, do the same thing to the left and right sides.</p>';
+      html += '<div class="prompt"><div>Solve the equation:</div><span class="equation">' + mathHTML(q.equation, game.highlightMode) + '</span><div class="term-tools"><button class="highlight-btn" id="highlightButton" type="button">Highlight all terms</button><span class="highlight-status" id="highlightStatus" aria-live="polite">No terms highlighted.</span></div></div>';
+      html += '<div class="work" aria-label="Solution steps">';
+      game.history.forEach(function (entry, i) {
+        const isStart = i === 0;
+        const isLatest = i === game.history.length - 1;
+        const label = isStart ? "Start" : "Step " + (entry.stepNumber == null ? i : entry.stepNumber);
+        const rowClass = "workrow" + (isLatest && !done ? " active" : "");
+        const markClass = "stepmark" + (isLatest && !done ? " active" : "") + (isStart || !isLatest || done ? " complete" : "");
+        html += '<div class="' + rowClass + '"><div class="' + markClass + '"><span>' + label + '</span></div><div class="workline" data-history-index="' + i + '">' + mathHTML(entry.line, game.highlightMode) + (entry.note ? '<small class="work-note">' + entry.note + '</small>' : '') + '</div></div>';
+      });
+      if (!done) {
+        html += '<div class="workrow pending"><div class="stepmark active"><span>Step ' + (game.stepIndex + 1) + '</span></div><div class="workline">……</div></div>';
+      }
+      html += '</div>';
+      $("sheet").innerHTML = html;
 
-            // --- EVENT LISTENERS ---
-
-            // Level selection buttons
-            levelSelection.addEventListener('click', (e) => {
-                if (e.target.classList.contains('level-btn')) {
-                    const level = e.target.dataset.level;
-                    startGame(level);
-                }
-            });
-
-            // "Change Level" button
-            changeLevelBtn.addEventListener('click', showLevelSelection);
-
-            // Calculator pad (using event delegation)
-            calculatorPad.addEventListener('click', (e) => {
-                if (e.target.tagName === 'BUTTON') {
-                    handleInput(e.target.dataset.value);
-                }
-            });
-
-            // Modal "Next Question" button
-            nextQuestionBtn.addEventListener('click', nextQuestion);
-            
-            // Add custom styles for calculator buttons
-            const calcBtns = document.querySelectorAll('.calc-btn');
-            calcBtns.forEach(btn => {
-                // Add base styles
-                btn.classList.add(
-                    'text-3xl', 'font-semibold', 'py-5', 'rounded-lg', 'shadow-md', 
-                    'transition-all', 'duration-150', 'transform', 'active:scale-95'
-                );
-                
-                // Add default colors unless it's a special button
-                if (!btn.classList.contains('bg-yellow-500') && 
-                    !btn.classList.contains('bg-gray-300') && 
-                    !btn.classList.contains('bg-green-500')) 
-                {
-                    btn.classList.add('bg-white', 'text-gray-800', 'border-b-4', 'border-gray-200', 'hover:bg-gray-50');
-                }
-                
-                // Adjust special button borders
-                if (btn.classList.contains('bg-yellow-500')) {
-                    btn.classList.add('border-b-4', 'border-yellow-700');
-                }
-                if (btn.classList.contains('bg-gray-300')) {
-                    btn.classList.add('border-b-4', 'border-gray-400');
-                }
-                if (btn.classList.contains('bg-green-500')) {
-                    btn.classList.add('border-b-4', 'border-green-700');
-                }
-            });
-
+      $("currentEquation").innerHTML = mathHTML(game.history[game.history.length - 1].line, game.highlightMode);
+      syncTermHighlightControls();
+      $("highlightButton").addEventListener("click", toggleTermHighlights);
+      $("screenLabel").textContent = done ? (skippedThisQuestion ? "Question complete" : "Equation solved") : (game.phase === "line" ? "Now write the new equation" : "Step " + (game.stepIndex + 1) + " of " + q.steps.length + " · choose a move");
+      $("feedback").textContent = game.feedback;
+      $("feedback").className = "feedback " + game.feedbackType;
+      const choices = $("choices");
+      if (done) {
+        choices.innerHTML = '<div class="complete-box"><b>' + (game.finished ? "All questions complete!" : (skippedThisQuestion ? "Question complete" : "Balanced and solved!")) + '</b><span>' + (game.finished ? "Your final solved equation is still shown here." : "Next equation loading…") + '</span></div>';
+        $("hintButton").hidden = true;
+        $("hintBox").hidden = true;
+        return;
+      }
+      $("hintButton").hidden = false;
+      $("hintButton").textContent = game.hintOpen ? "Hide hint" : "Show a hint";
+      const currentStep = step;
+      if (game.phase === "move") {
+        const validMoves = [currentStep.move];
+        if (currentStep.alternative) validMoves.push(currentStep.alternative.move);
+        const options = shuffled(validMoves.concat(currentStep.wrongMoves));
+        choices.innerHTML = '<p class="typehelp">Choose the move you will make:</p>' + options.map(function (move, i) {
+          return '<button class="choice move-choice" type="button" data-move="' + i + '"><span class="letter" aria-hidden="true">' + String.fromCharCode(65 + i) + '</span>' + move + '</button>';
+        }).join("");
+        choices.querySelectorAll(".move-choice").forEach(function (button, i) {
+          button.addEventListener("click", function () { chooseMove(options[i]); });
         });
-    </script>
+      } else {
+        const traceClass = currentStep.kind === "balance" ? "move-trace" : "move-trace simplify";
+        let trace;
+        if (currentStep.kind === "balance") {
+          trace = '<div class="' + traceClass + '"><p class="move-caption">Do the same move to each side: <b>' + game.selectedMove + '</b></p><div class="move-side"><small>Left side</small><b>' + currentStep.symbol + '</b></div><div class="move-side"><small>Right side</small><b>' + currentStep.symbol + '</b></div></div>';
+        } else {
+          trace = '<div class="' + traceClass + '"><div class="move-side"><small>Equivalent simplification</small><b>' + game.selectedMove + '</b></div></div>';
+        }
+        const variable = q.equation.match(/[a-z]/i)[0];
+        choices.innerHTML = trace + '<form class="answerform" id="answerForm"><label for="equationAnswer">Type the new equation after this move</label><input id="equationAnswer" name="equationAnswer" type="text" inputmode="none" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="e.g. 3a = 15" required><div class="keypad" role="group" aria-label="Math keypad">' +
+          '<button class="padkey" type="button" data-value="7" aria-label="7">7</button><button class="padkey" type="button" data-value="8" aria-label="8">8</button><button class="padkey" type="button" data-value="9" aria-label="9">9</button><button class="padkey op" type="button" data-value="−" aria-label="minus">−</button><button class="padkey op" type="button" data-value="(" aria-label="open bracket">(</button><button class="padkey op" type="button" data-value=")" aria-label="close bracket">)</button>' +
+          '<button class="padkey" type="button" data-value="4" aria-label="4">4</button><button class="padkey" type="button" data-value="5" aria-label="5">5</button><button class="padkey" type="button" data-value="6" aria-label="6">6</button><button class="padkey op" type="button" data-value="+" aria-label="plus">+</button><button class="padkey op" type="button" data-value="÷" aria-label="divide">÷</button><button class="padkey op" type="button" data-value="×" aria-label="multiply">×</button>' +
+          '<button class="padkey" type="button" data-value="1" aria-label="1">1</button><button class="padkey" type="button" data-value="2" aria-label="2">2</button><button class="padkey" type="button" data-value="3" aria-label="3">3</button><button class="padkey op" type="button" data-value="/" aria-label="fraction bar">/</button><button class="padkey op" type="button" data-value="=" aria-label="equals">=</button><button class="padkey variable" type="button" data-value="' + variable + '" aria-label="variable ' + variable + '">' + variable + '</button>' +
+          '<button class="padkey" type="button" data-value="0" aria-label="0">0</button><button class="padkey op" type="button" data-value="." aria-label="decimal point">.</button><button class="padkey action" type="button" data-action="backspace" aria-label="Backspace">⌫</button><button class="padkey action" type="button" data-action="clear" aria-label="Clear input" style="grid-column:span 3">Clear</button>' +
+          '</div><button class="btn" type="submit">Check my line</button><p class="answer-help">Include both sides of the equation. Use the keypad or your keyboard.</p></form>';
+        $("answerForm").addEventListener("submit", submitEquation);
+        choices.querySelectorAll(".padkey").forEach(function (button) {
+          button.addEventListener("click", function () { pressPadKey(button); });
+        });
+      }
+      $("hintBox").hidden = !game.hintOpen;
+      $("hintBox").innerHTML = '<b>' + (currentStep.kind === "balance" ? "Balance reminder" : "Simplify reminder") + '</b><p>' + currentStep.hint + '</p>';
+    }
+
+    function renderGame() {
+      renderProgress();
+      renderSheet(game.queue[game.qIndex]);
+    }
+
+    function chooseMove(answer) {
+      const q = game.queue[game.qIndex];
+      const step = q.steps[game.stepIndex];
+      let acceptedStep = null;
+      if (answer === step.move) {
+        acceptedStep = step;
+      } else if (step.alternative && answer === step.alternative.move) {
+        const oldStepCount = q.steps.length;
+        q.steps = step.alternative.steps;
+        game.totalSteps += q.steps.length - oldStepCount;
+        acceptedStep = q.steps[game.stepIndex];
+      }
+      if (acceptedStep) {
+        game.phase = "line";
+        game.selectedMove = acceptedStep.move;
+        game.feedback = acceptedStep.kind === "balance" ? "Now do " + acceptedStep.symbol + " to both sides, then simplify." : "Now simplify that side and write the equivalent equation.";
+        game.feedbackType = "note";
+        renderGame();
+        $("equationAnswer").focus();
+      } else {
+        game.currentQuestionHadError = true;
+        playSound("wrong");
+        game.tries++;
+        game.feedback = step.kind === "balance" ? "Try again. A balance move must be done to both sides." : "Try again. Choose a valid simplification of the expression.";
+        game.feedbackType = "bad";
+        renderGame();
+        $("choices").classList.add("shake");
+        window.setTimeout(function () { $("choices").classList.remove("shake"); }, 340);
+      }
+    }
+
+    function normalizeEquation(value) {
+      const compact = value.trim().toLowerCase().replace(/[−–]/g, "-").replace(/[×·]/g, "*").replace(/[÷]/g, "/").replace(/\s+/g, "").replace(/\*/g, "");
+      const sides = compact.split("=");
+      if (sides.length !== 2 || !sides[0] || !sides[1]) return null;
+      return sides;
+    }
+
+    function equationMatches(answer, target) {
+      const entered = normalizeEquation(answer);
+      const expected = normalizeEquation(target);
+      if (!entered || !expected) return false;
+      return (entered[0] === expected[0] && entered[1] === expected[1]) || (entered[0] === expected[1] && entered[1] === expected[0]);
+    }
+
+    function pressPadKey(button) {
+      const input = $("equationAnswer");
+      if (!input) return;
+      const start = input.selectionStart == null ? input.value.length : input.selectionStart;
+      const end = input.selectionEnd == null ? start : input.selectionEnd;
+      const action = button.getAttribute("data-action");
+      if (action === "clear") {
+        input.value = "";
+        input.focus();
+        input.setSelectionRange(0, 0);
+        return;
+      }
+      if (action === "backspace") {
+        if (start !== end) {
+          input.value = input.value.slice(0, start) + input.value.slice(end);
+          input.focus();
+          input.setSelectionRange(start, start);
+        } else if (start > 0) {
+          input.value = input.value.slice(0, start - 1) + input.value.slice(end);
+          input.focus();
+          input.setSelectionRange(start - 1, start - 1);
+        } else {
+          input.focus();
+        }
+        return;
+      }
+      const value = button.getAttribute("data-value") || "";
+      input.value = input.value.slice(0, start) + value + input.value.slice(end);
+      input.focus();
+      const cursor = start + value.length;
+      input.setSelectionRange(cursor, cursor);
+    }
+
+    function submitEquation(event) {
+      event.preventDefault();
+      const input = $("equationAnswer");
+      const answer = input.value.trim();
+      if (!answer) return;
+      const q = game.queue[game.qIndex];
+      const currentStepIndex = game.stepIndex;
+      const currentStep = q.steps[currentStepIndex];
+      let acceptedIndex = -1;
+      const furthestIndex = Math.min(q.steps.length - 1, currentStepIndex + 2);
+      for (let candidateIndex = currentStepIndex; candidateIndex <= furthestIndex; candidateIndex++) {
+        if (equationMatches(answer, q.steps[candidateIndex].line)) {
+          acceptedIndex = candidateIndex;
+          break;
+        }
+      }
+      if (acceptedIndex >= 0) {
+        const acceptedStep = q.steps[acceptedIndex];
+        const skippedSteps = acceptedIndex - currentStepIndex;
+        const firstTry = game.tries === 0 && !game.hintSeen;
+        game.score += firstTry ? 10 : 5;
+        game.solved++;
+        if (firstTry) game.firstTry++;
+        game.skipped += skippedSteps;
+        const note = skippedSteps ? "Skipped " + skippedSteps + " intermediate step" + (skippedSteps === 1 ? "" : "s") : (acceptedStep.kind === "balance" ? acceptedStep.symbol + " on both sides" : acceptedStep.move);
+        game.history.push({ line: acceptedStep.line, note: note, stepNumber: acceptedIndex + 1 });
+        game.stepIndex = acceptedIndex + 1;
+        game.phase = "move";
+        const completedMove = game.selectedMove;
+        game.selectedMove = "";
+        game.tries = 0;
+        game.hintSeen = false;
+        game.hintOpen = false;
+        game.feedback = skippedSteps ? "Correct! Accepted with " + skippedSteps + " intermediate step" + (skippedSteps === 1 ? "" : "s") + " skipped." : "Correct! " + completedMove + ".";
+        game.feedbackType = "ok";
+        playSound("correct");
+        renderGame();
+        if (game.stepIndex >= q.steps.length) {
+          const finishedQuestion = game.qIndex;
+          const finishedRun = game;
+          window.setTimeout(function () {
+            if (!game || game !== finishedRun || game.qIndex !== finishedQuestion) return;
+            advanceQuestion();
+          }, 1050);
+        }
+      } else {
+        game.currentQuestionHadError = true;
+        playSound("wrong");
+        game.tries++;
+        game.feedback = "That line does not match this move yet. Recheck the algebra, then enter the equation with both sides.";
+        game.feedbackType = "bad";
+        $("feedback").textContent = game.feedback;
+        $("feedback").className = "feedback bad";
+        $("choices").classList.add("shake");
+        window.setTimeout(function () { $("choices").classList.remove("shake"); }, 340);
+        input.focus();
+      }
+    }
+
+    function toggleHint() {
+      const q = game.queue[game.qIndex];
+      if (game.stepIndex >= q.steps.length) return;
+      const oldInput = $("equationAnswer");
+      const savedAnswer = oldInput ? oldInput.value : null;
+      game.hintOpen = !game.hintOpen;
+      if (game.hintOpen) game.hintSeen = true;
+      renderGame();
+      const newInput = $("equationAnswer");
+      if (newInput && savedAnswer !== null) {
+        newInput.value = savedAnswer;
+        newInput.focus();
+        newInput.setSelectionRange(savedAnswer.length, savedAnswer.length);
+      }
+    }
+
+    function advanceQuestion() {
+      const finished = game.queue[game.qIndex];
+      if (game.currentQuestionHadError && !finished.isBonus && !game.bonusProvided[finished.typeKey]) {
+        const bonus = Object.assign({}, bonusQuestions[finished.typeKey], { typeKey: finished.typeKey, isBonus: true, level: finished.level, levelKey: finished.levelKey });
+        game.queue.splice(game.qIndex + 1, 0, bonus);
+        game.totalSteps += bonus.steps.length;
+        game.bonusProvided[finished.typeKey] = true;
+      }
+      if (game.qIndex >= game.queue.length - 1) {
+        showResults();
+        return;
+      }
+      game.qIndex++;
+      loadQuestion();
+      renderGame();
+    }
+
+    function showResults() {
+      playSound("complete");
+      game.finished = true;
+      $("finalScore").textContent = String(game.score);
+      $("finalSteps").textContent = (game.solved + game.skipped) + " / " + game.totalSteps;
+      $("finalSkipped").textContent = String(game.skipped);
+      $("finalFirstTry").textContent = Math.round((game.firstTry / game.totalSteps) * 100) + "%";
+      $("finishMessage").textContent = game.selectedLevel
+        ? "You completed every question in this level. Your final equation stays visible beside your trophy."
+        : "You completed all question types across the three levels. Your final equation stays visible beside your trophy.";
+      renderGame();
+      $("finishView").hidden = false;
+    }
+
+    document.querySelectorAll(".level-btn").forEach(function (button) {
+      button.addEventListener("click", function () { startGame(Number(button.getAttribute("data-level"))); });
+    });
+    $("playAllButton").addEventListener("click", function () { startGame(null); });
+    $("playAgainButton").addEventListener("click", function () { startGame(game ? game.selectedLevel : null); });
+    $("restartButton").addEventListener("click", function () { game = null; setView("intro"); });
+    $("hintButton").addEventListener("click", toggleHint);
+    $("soundButton").addEventListener("click", function () {
+      sound.enabled = !sound.enabled;
+      syncSoundButton();
+    });
+  </script>
 </body>
 </html>
