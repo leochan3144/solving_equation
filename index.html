@@ -275,7 +275,7 @@
           <li>Type the new line after simplifying.</li>
           <li>Use a hint if you get stuck. It will remind you what to do on each side.</li>
           <li>You may enter a line up to 2 steps ahead. The game accepts it and records the omitted intermediate steps as skipped.</li>
-          <li>There are 3 core questions in each question type. A mistake adds one extra question of that type.</li>
+          <li>Each level mixes several question types. A mistake adds one extra question of that type (once per type).</li>
           <li><span class="points">10 points</span> for a step solved without a hint or retry; <span class="points">5 points</span> after a hint or retry.</li>
         </ul>
         <div class="level-guide" aria-label="Question levels">
@@ -351,7 +351,14 @@
 
     function fmtTenth(value) {
       const absolute = Math.abs(value);
-      return (value < 0 ? "−" : "") + Math.floor(absolute / 10) + "." + (absolute % 10);
+      const digits = absolute % 10 === 0 ? String(absolute / 10) : Math.floor(absolute / 10) + "." + (absolute % 10);
+      return (value < 0 ? "−" : "") + digits;
+    }
+
+    // Final "divide by the coefficient" step, skipped when the coefficient is already 1.
+    function divideStep(coefficient, v, solution, hint) {
+      if (coefficient === 1) return [];
+      return [balanceStep("Divide both sides by " + fmtInt(coefficient), "÷ " + (coefficient < 0 ? "(" + fmtInt(coefficient) + ")" : coefficient), v + " = " + fmtInt(solution), hint, ["Multiply both sides by " + fmtInt(coefficient), "Subtract " + fmtInt(coefficient) + " from both sides"])];
     }
 
     function constantText(value) {
@@ -472,48 +479,38 @@
     function makeLikeTerms(levelKey, extra, used, variant) {
       const v = randomVariable(used);
       const first = randomInt(5, 9);
-      const second = randomInt(1, 4);
-      const coefficient = first - second;
-      let constant;
+      let second;
+      let coefficient;
+      let wrongCoefficient;
       let equation;
       let simplifyMove;
-      if (variant === 1) {
-        constant = randomNonzeroInt(-9, 9);
-        equation = first + v + " − " + second + v + constantText(constant);
-        simplifyMove = "Combine " + first + v + " and −" + second + v + " on the left";
-      } else if (variant === 2) {
-        const total = first + randomInt(2, 5);
-        const other = total - first;
-        constant = -randomInt(1, 9);
-        equation = first + v + " + " + other + v + constantText(constant);
-        simplifyMove = "Combine " + first + v + " and " + other + v + " on the left";
-        const solution = randomNonzeroInt(-8, 8);
-        const result = coefficientForLikeTerms(first, other, solution, constant);
-        const middle = result - constant;
-        return likeTermsQuestion(levelKey, extra, v, "Like terms · addition", equation, simplifyMove, total, constant, solution, result, middle, first, other, false);
+      let label;
+      const constant = variant === 2 ? -randomInt(1, 9) : randomNonzeroInt(-9, 9);
+      if (variant === 2) {
+        second = randomInt(2, 5);
+        coefficient = first + second;
+        wrongCoefficient = first - second;
+        equation = first + v + " + " + variableTerm(second, v) + constantText(constant);
+        simplifyMove = "Combine " + first + v + " and " + variableTerm(second, v) + " on the left";
+        label = "Like terms · addition";
       } else {
-        constant = randomNonzeroInt(-9, 9);
-        equation = first + v + constantText(constant) + " − " + second + v;
-        simplifyMove = "Combine " + first + v + " and −" + second + v + " on the left";
+        second = randomInt(1, 4);
+        coefficient = first - second;
+        wrongCoefficient = first + second;
+        equation = variant === 1
+          ? first + v + " − " + variableTerm(second, v) + constantText(constant)
+          : first + v + constantText(constant) + " − " + variableTerm(second, v);
+        simplifyMove = "Combine " + first + v + " and " + variableTerm(-second, v) + " on the left";
+        label = variant === 1 ? "Like terms · subtraction" : "Like terms · mixed signs";
       }
       const solution = randomNonzeroInt(-8, 8);
       const result = coefficient * solution + constant;
       const middle = result - constant;
-      const label = variant === 1 ? "Like terms · subtraction" : "Like terms · mixed signs";
-      return likeTermsQuestion(levelKey, extra, v, label, equation, simplifyMove, coefficient, constant, solution, result, middle, first, second, true);
-    }
-
-    function coefficientForLikeTerms(first, second, solution, constant) {
-      return (first + second) * solution + constant;
-    }
-
-    function likeTermsQuestion(levelKey, extra, v, label, equation, simplifyMove, coefficient, constant, solution, result, middle, first, second, subtractPattern) {
       const action = constantAction(constant);
       return makeQuestion(levelKey, label, "likeTerms", equation + " = " + fmtInt(result), [
-        simplifyStep(simplifyMove, coefficient + v + constantText(constant) + " = " + fmtInt(result), "Combine only the like variable terms. Leave the constants and right side unchanged.", ["Combine the variable terms as " + (first + second) + v, "Combine a variable term with the constant"]),
-        balanceStep(action.move, action.symbol, coefficient + v + " = " + fmtInt(middle), "Undo the constant by doing the inverse operation to both sides.", [action.opposite, "Divide both sides by " + Math.abs(constant)]),
-        balanceStep("Divide both sides by " + coefficient, "÷ " + coefficient, v + " = " + fmtInt(solution), "Divide both sides by the remaining coefficient.", ["Multiply both sides by " + coefficient, "Subtract " + coefficient + " from both sides"])
-      ], extra);
+        simplifyStep(simplifyMove, variableTerm(coefficient, v) + constantText(constant) + " = " + fmtInt(result), "Combine only the like variable terms. Leave the constants and right side unchanged.", ["Combine the variable terms as " + variableTerm(wrongCoefficient, v), "Combine a variable term with the constant"]),
+        balanceStep(action.move, action.symbol, variableTerm(coefficient, v) + " = " + fmtInt(middle), "Undo the constant by doing the inverse operation to both sides.", [action.opposite, "Divide both sides by " + Math.abs(constant)])
+      ].concat(divideStep(coefficient, v, solution, "Divide both sides by the remaining coefficient.")), extra);
     }
 
     function makeBracketSimple(levelKey, extra, used) {
@@ -565,7 +562,7 @@
       return makeQuestion(levelKey, "Fractions · variables on both sides", "fractions", "(" + v + " + " + leftOffset + ") / " + leftDenominator + " = (" + v + " + " + rightOffset + ") / " + rightDenominator, [
         balanceStep("Multiply both sides by " + rightDenominator, "× " + rightDenominator, cleared, "Multiply both complete sides by the common denominator. The fraction denominators clear together.", ["Multiply only the left side by " + rightDenominator, "Divide both sides by " + rightDenominator]),
         simplifyStep("Expand the left bracket", "2" + v + " + " + (2 * leftOffset) + " = " + v + " + " + rightOffset, "Distribute 2 to both terms inside the bracket.", ["Multiply only the variable by 2", "Expand the right side instead"]),
-        balanceStep("Subtract " + v + " from both sides", "− " + v, v + " + " + (2 * leftOffset) + " = " + rightOffset, "Subtract the variable from both sides so the variable remains on one side.", ["Add " + v + " to both sides", "Subtract " + (2 * leftOffset) + " from both sides"]),
+        balanceStep("Subtract " + v + " from both sides", "− " + v, v + " + " + (2 * leftOffset) + " = " + rightOffset, "Subtract the variable from both sides so the variable remains on one side.", ["Add " + v + " to both sides", "Subtract " + v + " from the left side only"]),
         balanceStep("Subtract " + (2 * leftOffset) + " from both sides", "− " + (2 * leftOffset), v + " = " + solution, "Subtract the constant from each side to isolate the variable.", ["Add " + (2 * leftOffset) + " to both sides", "Divide both sides by " + (2 * leftOffset)])
       ], extra);
     }
@@ -595,11 +592,11 @@
       const solution = randomNonzeroInt(-8, 8);
       const rightConstant = leftConstant + difference * solution;
       const constantMove = constantAction(leftConstant);
-      return makeQuestion(levelKey, "Variables on both sides · collect terms", "bothSides", leftCoefficient + v + constantText(leftConstant) + " = " + rightCoefficient + v + constantText(rightConstant), [
-        balanceStep("Subtract " + rightCoefficient + v + " from both sides", "− " + rightCoefficient + v, difference + v + constantText(leftConstant) + " = " + fmtInt(rightConstant), "Subtract the smaller variable term from both sides to collect the variables on the left.", ["Add " + rightCoefficient + v + " to both sides", "Subtract " + leftCoefficient + v + " from both sides"]),
-        balanceStep(constantMove.move, constantMove.symbol, difference + v + " = " + fmtInt(difference * solution), "Undo the constant on the left by doing the inverse operation to both sides.", [constantMove.opposite, "Divide both sides by " + Math.abs(leftConstant)]),
-        balanceStep("Divide both sides by " + difference, "÷ " + difference, v + " = " + fmtInt(solution), "Divide both sides by the remaining variable coefficient.", ["Multiply both sides by " + difference, "Subtract " + difference + " from both sides"])
-      ], extra);
+      const rightTerm = variableTerm(rightCoefficient, v);
+      return makeQuestion(levelKey, "Variables on both sides · collect terms", "bothSides", leftCoefficient + v + constantText(leftConstant) + " = " + rightTerm + constantText(rightConstant), [
+        balanceStep("Subtract " + rightTerm + " from both sides", "− " + rightTerm, variableTerm(difference, v) + constantText(leftConstant) + " = " + fmtInt(rightConstant), "Subtract the smaller variable term from both sides to collect the variables on the left.", ["Add " + rightTerm + " to both sides", "Subtract " + rightTerm + " from the left side only"]),
+        balanceStep(constantMove.move, constantMove.symbol, variableTerm(difference, v) + " = " + fmtInt(difference * solution), "Undo the constant on the left by doing the inverse operation to both sides.", [constantMove.opposite, "Divide both sides by " + Math.abs(leftConstant)])
+      ].concat(divideStep(difference, v, solution, "Divide both sides by the remaining variable coefficient.")), extra);
     }
 
     function makeBracketExpandCombine(levelKey, extra, used) {
@@ -613,13 +610,14 @@
       const solution = randomNonzeroInt(-6, 7);
       const rightConstant = leftConstant + difference * solution;
       const constantMove = constantAction(leftConstant);
-      return makeQuestion(levelKey, "Brackets · expand and combine terms", "brackets", outside + "(" + v + " − " + inside + ") + " + extraConstant + " = " + rightCoefficient + v + constantText(rightConstant), [
-        simplifyStep("Distribute " + outside + " across the bracket", outside + v + " − " + (outside * inside) + " + " + extraConstant + " = " + rightCoefficient + v + constantText(rightConstant), "Multiply both terms inside the bracket by " + outside + ". Keep the right side unchanged.", ["Multiply only the variable by " + outside, "Distribute the bracket to both sides"]),
-        simplifyStep("Combine the constants on the left", outside + v + constantText(leftConstant) + " = " + rightCoefficient + v + constantText(rightConstant), "Combine the negative product and the added constant on the left.", ["Add the constants instead of subtracting", "Combine a constant with a variable term"]),
-        balanceStep("Subtract " + rightCoefficient + v + " from both sides", "− " + rightCoefficient + v, difference + v + constantText(leftConstant) + " = " + fmtInt(rightConstant), "Subtract the variable term on the right from both sides.", ["Add " + rightCoefficient + v + " to both sides", "Subtract " + outside + v + " from both sides"]),
-        balanceStep(constantMove.move, constantMove.symbol, difference + v + " = " + fmtInt(rightConstant - leftConstant), "Undo the constant on the left using the same operation on both sides.", [constantMove.opposite, "Divide both sides by " + Math.abs(leftConstant)]),
-        balanceStep("Divide both sides by " + difference, "÷ " + difference, v + " = " + fmtInt(solution), "Divide both sides by the remaining coefficient.", ["Multiply both sides by " + difference, "Subtract " + difference + " from both sides"])
-      ], extra);
+      const rightTerm = variableTerm(rightCoefficient, v);
+      const rightSide = rightTerm + constantText(rightConstant);
+      return makeQuestion(levelKey, "Brackets · expand and combine terms", "brackets", outside + "(" + v + " − " + inside + ") + " + extraConstant + " = " + rightSide, [
+        simplifyStep("Distribute " + outside + " across the bracket", outside + v + " − " + (outside * inside) + " + " + extraConstant + " = " + rightSide, "Multiply both terms inside the bracket by " + outside + ". Keep the right side unchanged.", ["Multiply only the variable by " + outside, "Distribute the bracket to both sides"]),
+        simplifyStep("Combine the constants on the left", outside + v + constantText(leftConstant) + " = " + rightSide, "Combine the negative product and the added constant on the left.", ["Add the constants instead of subtracting", "Combine a constant with a variable term"]),
+        balanceStep("Subtract " + rightTerm + " from both sides", "− " + rightTerm, variableTerm(difference, v) + constantText(leftConstant) + " = " + fmtInt(rightConstant), "Subtract the variable term on the right from both sides.", ["Add " + rightTerm + " to both sides", "Subtract " + rightTerm + " from the left side only"]),
+        balanceStep(constantMove.move, constantMove.symbol, variableTerm(difference, v) + " = " + fmtInt(rightConstant - leftConstant), "Undo the constant on the left using the same operation on both sides.", [constantMove.opposite, "Divide both sides by " + Math.abs(leftConstant)])
+      ].concat(divideStep(difference, v, solution, "Divide both sides by the remaining coefficient.")), extra);
     }
 
     function makeBracketBothSides(levelKey, extra, used) {
@@ -630,12 +628,13 @@
       const inside = randomInt(1, 7);
       const solution = randomNonzeroInt(-6, 8);
       const rightConstant = difference * solution + outside * inside;
-      return makeQuestion(levelKey, "Brackets · variables on both sides", "brackets", outside + "(" + v + " + " + inside + ") = " + rightCoefficient + v + constantText(rightConstant), [
-        simplifyStep("Distribute " + outside + " across the left bracket", outside + v + " + " + (outside * inside) + " = " + rightCoefficient + v + constantText(rightConstant), "Multiply both terms inside the left bracket by " + outside + ". Do not change the right side.", ["Multiply only the variable by " + outside, "Multiply both sides by " + outside]),
-        balanceStep("Subtract " + rightCoefficient + v + " from both sides", "− " + rightCoefficient + v, difference + v + " + " + (outside * inside) + " = " + fmtInt(rightConstant), "Subtract the variable term on the right from both sides.", ["Add " + rightCoefficient + v + " to both sides", "Subtract " + outside + v + " from both sides"]),
-        balanceStep("Subtract " + (outside * inside) + " from both sides", "− " + (outside * inside), difference + v + " = " + fmtInt(difference * solution), "Subtract the constant from each side.", ["Add " + (outside * inside) + " to both sides", "Divide both sides by " + (outside * inside)]),
-        balanceStep("Divide both sides by " + difference, "÷ " + difference, v + " = " + fmtInt(solution), "Divide both sides by the remaining coefficient to isolate the variable.", ["Multiply both sides by " + difference, "Subtract " + difference + " from both sides"])
-      ], extra);
+      const rightTerm = variableTerm(rightCoefficient, v);
+      const rightSide = rightTerm + constantText(rightConstant);
+      return makeQuestion(levelKey, "Brackets · variables on both sides", "brackets", outside + "(" + v + " + " + inside + ") = " + rightSide, [
+        simplifyStep("Distribute " + outside + " across the left bracket", outside + v + " + " + (outside * inside) + " = " + rightSide, "Multiply both terms inside the left bracket by " + outside + ". Do not change the right side.", ["Multiply only the variable by " + outside, "Multiply both sides by " + outside]),
+        balanceStep("Subtract " + rightTerm + " from both sides", "− " + rightTerm, variableTerm(difference, v) + " + " + (outside * inside) + " = " + fmtInt(rightConstant), "Subtract the variable term on the right from both sides.", ["Add " + rightTerm + " to both sides", "Subtract " + rightTerm + " from the left side only"]),
+        balanceStep("Subtract " + (outside * inside) + " from both sides", "− " + (outside * inside), variableTerm(difference, v) + " = " + fmtInt(difference * solution), "Subtract the constant from each side.", ["Add " + (outside * inside) + " to both sides", "Divide both sides by " + (outside * inside)])
+      ].concat(divideStep(difference, v, solution, "Divide both sides by the remaining coefficient to isolate the variable.")), extra);
     }
 
     function buildQuestionBank() {
@@ -680,19 +679,25 @@
       return bank;
     }
 
-    const questions = createQuestionBank();
-    const bonusUsed = [];
-    const bonusQuestions = {
-      oneStep: makeOneStepMultiplication(1, true, bonusUsed),
-      twoStep: makeTwoStepPositive(1, true, bonusUsed),
-      likeTerms: makeLikeTerms(2, true, bonusUsed, 1),
-      brackets: makeBracketSimple(2, true, bonusUsed),
-      fractions: makeFractionSimple(2, true, bonusUsed, true),
-      decimals: makeDecimal(2, true, bonusUsed, false, "Decimals · extra practice"),
-      bothSides: makeBothSides(3, true, bonusUsed)
-    };
     const typeOrder = ["oneStep", "twoStep", "likeTerms", "brackets", "fractions", "decimals", "bothSides"];
-    questions.sort(function (a, b) { return a.levelKey - b.levelKey || typeOrder.indexOf(a.typeKey) - typeOrder.indexOf(b.typeKey); });
+    let questions = [];
+    let bonusQuestions = {};
+
+    // Build a fresh set of questions (and extra-practice questions) for each new game.
+    function prepareQuestionSet() {
+      questions = createQuestionBank();
+      questions.sort(function (a, b) { return a.levelKey - b.levelKey || typeOrder.indexOf(a.typeKey) - typeOrder.indexOf(b.typeKey); });
+      const bonusUsed = [];
+      bonusQuestions = {
+        oneStep: makeOneStepMultiplication(1, true, bonusUsed),
+        twoStep: makeTwoStepPositive(1, true, bonusUsed),
+        likeTerms: makeLikeTerms(2, true, bonusUsed, 1),
+        brackets: makeBracketSimple(2, true, bonusUsed),
+        fractions: makeFractionSimple(2, true, bonusUsed, true),
+        decimals: makeDecimal(2, true, bonusUsed, false, "Decimals · extra practice"),
+        bothSides: makeBothSides(3, true, bonusUsed)
+      };
+    }
     let game = null;
     const sound = { enabled: true, context: null };
 
@@ -841,6 +846,7 @@
     }
 
     function startGame(levelKey) {
+      prepareQuestionSet();
       const selectedQuestions = levelKey
         ? shuffled(questions.filter(function (question) { return question.levelKey === levelKey; }))
         : [1, 2, 3].reduce(function (all, key) {
@@ -993,15 +999,110 @@
     }
 
     function normalizeEquation(value) {
-      const compact = value.trim().toLowerCase().replace(/[−–]/g, "-").replace(/[×·]/g, "*").replace(/[÷]/g, "/").replace(/\s+/g, "").replace(/\*/g, "");
+      const compact = value.trim().toLowerCase().replace(/[−–—]/g, "-").replace(/[×·]/g, "*").replace(/[÷]/g, "/").replace(/\s+/g, "").replace(/\*/g, "");
       const sides = compact.split("=");
       if (sides.length !== 2 || !sides[0] || !sides[1]) return null;
       return sides;
     }
 
+    // Numbers are compared by value, so 6, 6.0 and 6.00 are all the same; 0.5 and .5 too.
+    const NUMBER = "(?:\\d+\\.?\\d*|\\.\\d+)";
+    const NUMBER_ONLY = new RegExp("^" + NUMBER + "$");
+    const VARIABLE_TERM = new RegExp("^(" + NUMBER + ")?([a-z])$");
+    const SIMPLE_FRACTION = new RegExp("^([a-z]|" + NUMBER + ")/(" + NUMBER + "|[a-z])$");
+
+    function numberKey(value) {
+      return String(Math.round(value * 1e6) / 1e6);
+    }
+
+    // Split one side into its top-level terms, keeping the sign of each term.
+    function splitSignedTerms(side) {
+      const terms = [];
+      let body = "";
+      let sign = 1;
+      let depth = 0;
+      for (let i = 0; i < side.length; i++) {
+        const ch = side[i];
+        if (ch === "(") depth++;
+        if (ch === ")") { depth--; if (depth < 0) return null; }
+        if (depth === 0 && (ch === "+" || ch === "-")) {
+          if (body) { terms.push({ sign: sign, body: body }); body = ""; sign = 1; }
+          if (ch === "-") sign = -sign;
+        } else {
+          body += ch;
+        }
+      }
+      if (depth !== 0 || !body) return null;
+      terms.push({ sign: sign, body: body });
+      return terms;
+    }
+
+    // Index of the bracket that closes the "(" at position open, or -1.
+    function closingBracket(text, open) {
+      let depth = 0;
+      for (let i = open; i < text.length; i++) {
+        if (text[i] === "(") depth++;
+        if (text[i] === ")") { depth--; if (depth === 0) return i; }
+      }
+      return -1;
+    }
+
+    function termKey(sign, body) {
+      if (NUMBER_ONLY.test(body)) return "c:" + numberKey(sign * parseFloat(body));
+      let match = body.match(VARIABLE_TERM);
+      if (match) return "v" + match[2] + ":" + numberKey(sign * (match[1] ? parseFloat(match[1]) : 1));
+      match = body.match(new RegExp("^(" + NUMBER + ")?\\("));
+      if (match) {
+        const open = match[0].length - 1;
+        const close = closingBracket(body, open);
+        if (close < 0) return null;
+        const inner = sideKey(body.slice(open + 1, close));
+        if (inner === null) return null;
+        const coefficient = sign * (match[1] ? parseFloat(match[1]) : 1);
+        const rest = body.slice(close + 1);
+        if (rest === "") return "b:" + numberKey(coefficient) + "(" + inner + ")";
+        const denominator = rest.match(new RegExp("^/(" + NUMBER + "|[a-z])$"));
+        if (denominator) {
+          const d = NUMBER_ONLY.test(denominator[1]) ? numberKey(parseFloat(denominator[1])) : denominator[1];
+          return "f:" + numberKey(coefficient) + "(" + inner + ")/" + d;
+        }
+        return null;
+      }
+      match = body.match(SIMPLE_FRACTION);
+      if (match) {
+        const top = NUMBER_ONLY.test(match[1]) ? numberKey(parseFloat(match[1])) : match[1];
+        const bottom = NUMBER_ONLY.test(match[2]) ? numberKey(parseFloat(match[2])) : match[2];
+        return "q:" + (sign < 0 ? "-" : "") + top + "/" + bottom;
+      }
+      return null;
+    }
+
+    // A side is matched term by term, in any order: "6 + 3x" matches "3x + 6",
+    // "x" matches "1x", but "5x − 4x" does NOT match "x" (it still needs combining).
+    function sideKey(side) {
+      const terms = splitSignedTerms(side);
+      if (!terms) return null;
+      const keys = [];
+      for (let i = 0; i < terms.length; i++) {
+        const key = termKey(terms[i].sign, terms[i].body);
+        if (key === null) return null;
+        keys.push(key);
+      }
+      return keys.sort().join("|");
+    }
+
+    function equationKeys(value) {
+      const sides = normalizeEquation(value);
+      if (!sides) return null;
+      const left = sideKey(sides[0]);
+      const right = sideKey(sides[1]);
+      if (left === null || right === null) return null;
+      return [left, right];
+    }
+
     function equationMatches(answer, target) {
-      const entered = normalizeEquation(answer);
-      const expected = normalizeEquation(target);
+      const entered = equationKeys(answer);
+      const expected = equationKeys(target);
       if (!entered || !expected) return false;
       return (entered[0] === expected[0] && entered[1] === expected[1]) || (entered[0] === expected[1] && entered[1] === expected[0]);
     }
@@ -1137,7 +1238,7 @@
       $("finalScore").textContent = String(game.score);
       $("finalSteps").textContent = (game.solved + game.skipped) + " / " + game.totalSteps;
       $("finalSkipped").textContent = String(game.skipped);
-      $("finalFirstTry").textContent = Math.round((game.firstTry / game.totalSteps) * 100) + "%";
+      $("finalFirstTry").textContent = (game.solved ? Math.round((game.firstTry / game.solved) * 100) : 0) + "%";
       $("finishMessage").textContent = game.selectedLevel
         ? "You completed every question in this level. Your final equation stays visible beside your trophy."
         : "You completed all question types across the three levels. Your final equation stays visible beside your trophy.";
